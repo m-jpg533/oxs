@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DJ RADAR · AI NIGHT MODE</title>
+
+<style>
+html,body{
+  margin:0;
+  background:#000;
+  overflow:hidden;
+}
+#radar{
+  width:100vw;
+  height:100vh;
+  background:radial-gradient(circle,#0f0 2%,#000 70%);
+  animation:spin 4s linear infinite;
+}
+@keyframes spin{
+  from{transform:rotate(0deg)}
+  to{transform:rotate(360deg)}
+}
+#hud{
+  position:fixed;
+  top:10px;
+  left:10px;
+  color:#0f0;
+  font-family:monospace;
+}
+#start{
+  position:fixed;
+  inset:0;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  color:#fff;
+  font-size:24px;
+  background:#000;
+  cursor:pointer;
+}
+</style>
+</head>
+
+<body>
+
+<div id="radar"></div>
+<div id="hud">LOADING AI...</div>
+<div id="start">▶ TAP TO START DJ MODE</div>
+
+<iframe id="yt"
+  width="0" height="0"
+  src="https://www.youtube.com/embed/gu0mj-Ljr4I?enablejsapi=1"
+  allow="autoplay"
+></iframe>
+
+<script>
+let energy = 0.5;
+let weather = "";
+
+document.getElementById("start").onclick = () => {
+  document.getElementById("start").style.display="none";
+  document.getElementById("yt").contentWindow.postMessage(
+    '{"event":"command","func":"playVideo","args":""}', '*'
+  );
+};
+
+fetch("https://script.google.com/macros/s/AKfycbz-xUoq6IUXWg9OFVCDsNeaQOUYx0sOStsUBqY5O1G76O8mSmKQh7PPefFMmZSX1otg/exec")
+.then(r=>r.json())
+.then(data=>{
+  weather = data.now.weather;
+  document.getElementById("hud").innerText =
+    data.now.location + " · " + weather;
+  aiRule();
+});
+
+function aiRule(){
+  if(weather.includes("雨")){
+    document.getElementById("radar").style.background =
+      "radial-gradient(circle,#0ff,#000)";
+    energy = 0.4;
+  }else{
+    energy = 0.8;
+  }
+  document.getElementById("radar").style.animationDuration =
+    (6 - energy*4) + "s";
+}
+</script>
+
+</body>
+</html>
