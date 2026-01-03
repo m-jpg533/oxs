@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DJ RADAR · AUDIO MODE</title>
+
+<style>
+html,body{
+  margin:0;
+  background:#000;
+  overflow:hidden;
+  font-family:monospace;
+}
+#radar{
+  width:100vw;
+  height:100vh;
+  background:radial-gradient(circle,#00ffcc 2%,#000 70%);
+  animation:spin 6s linear infinite;
+}
+@keyframes spin{
+  from{transform:rotate(0deg)}
+  to{transform:rotate(360deg)}
+}
+#startScreen{
+  position:fixed;
+  inset:0;
+  background:black;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  z-index:10;
+}
+#startBtn{
+  font-size:22px;
+  padding:20px 40px;
+  border-radius:12px;
+  border:none;
+  background:#00ffcc;
+  color:#000;
+}
+</style>
+</head>
+
+<body>
+
+<div id="radar"></div>
+
+<div id="startScreen">
+  <button id="startBtn">▶ TAP TO START AUDIO AI</button>
+</div>
+
+<audio id="music" loop crossorigin="anonymous">
+  <source src="https://m-jpg533.github.io/oxs/37.mp4" type="audio/mpeg">
+</audio>
+
+<script>
+/* ===== DOM ===== */
+const radar = document.getElementById("radar");
+const music = document.getElementById("music");
+const startBtn = document.getElementById("startBtn");
+const screen = document.getElementById("startScreen");
+/* 🔗 GAS Web App（回傳全台陣列） */
+const GAS_URL = "https://script.google.com/macros/s/AKfycbzA20FYmlgY6WPMfv2gwlFGk96zluog-6ICqmfar1qiR6OBJ9jLh9lukGpKI82NzsHc/exec"
+;
+
+/* === 全台資料 === */
+let weatherList = [];
+let index = 0;
+/* === 啟動（解鎖音訊） === */
+startBtn.onclick = async () => {
+  await music.play();
+  screen.style.display = "none";
+  loadAllWeather();
+};
+
+/* === 抓全台氣象 === */
+function loadAllWeather(){
+  fetch(GAS_URL)
+    .then(r => r.json())
+    .then(data => {
+      weatherList = data;   // ⚠️ data 必須是陣列
+      showWeather();
+      setInterval(showWeather, 10000); // 每 10 秒換縣市
+    })
+    .catch(err=>{
+      locEl.innerText = "❌ 氣象讀取失敗";
+      console.error(err);
+    });
+}
+
+/* === 顯示單一縣市 === */
+function showWeather(){
+  if(weatherList.length === 0) return;
+
+  const w = weatherList[index];
+
+  locEl.innerText = "📍 " + w.location;
+  tempEl.innerText = `🌡 ${w.minT} ~ ${w.maxT} °C`;
+  weatherEl.innerText = "☁️ " + w.weather;
+
+  /* 雷達效果 */
+  if(w.weather.includes("雨")){
+    radar.style.background = "radial-gradient(circle,#00ccff,#000)";
+    radar.style.animationDuration = "8s";
+  }else{
+    radar.style.background = "radial-gradient(circle,#00ff66,#000)";
+    radar.style.animationDuration = "4s";
+  }
+
+  index = (index + 1) % weatherList.length;
+}
+/* ===== Audio AI ===== */
+let audioCtx, analyser, dataArray;
+
+function initAudioAI(){
+  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  const source = audioCtx.createMediaElementSource(music);
+  analyser = audioCtx.createAnalyser();
+
+  analyser.fftSize = 1024;
+  dataArray = new Uint8Array(analyser.frequencyBinCount);
+
+  source.connect(analyser);
+  analyser.connect(audioCtx.destination);
+
+  analyseLoop();
+}
+
+function analyseLoop(){
+  analyser.getByteFrequencyData(dataArray);
+
+  const bass = avg(dataArray.slice(0, 40));     // 低頻
+  const mid  = avg(dataArray.slice(40, 120));   // 中頻
+  const high = avg(dataArray.slice(120, 256));  // 高頻
+
+  driveRadar(bass, mid, high);
+
+  requestAnimationFrame(analyseLoop);
+}
+
+function avg(arr){
+  return arr.reduce((a,b)=>a+b,0) / arr.length;
+}
+
+/* ===== 雷達驅動 ===== */
+function driveRadar(bass, mid, high){
+  const glow = 40 + bass * 1.6;
+  radar.style.boxShadow = `0 0 ${glow}px rgb(0,255,255)`;
+
+  const speed = Math.max(2, 8 - mid / 40);
+  radar.style.animationDuration = speed + "s";
+}
+
+/* ===== 手機必須點擊啟動 ===== */
+startBtn.onclick = async ()=>{
+  await music.play();       // ✅ 手機解鎖音訊
+  initAudioAI();            // ✅ 真音樂分析
+  screen.style.display="none";
+};
+</script>
+
+</body>
+</html>
