@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<title>全台即時氣溫</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body {
+  margin: 0;
+  background: #000;
+  color: #0ff;
+  font-family: system-ui;
+}
+#list {
+  padding: 20px;
+}
+.item {
+  padding: 8px 0;
+  border-bottom: 1px solid #033;
+}
+.temp {
+  color: #ff0;
+}
+</style>
+</head>
+
+<body>
+<div id="list">讀取中...</div>
+
+<script>
+fetch("https://script.google.com/macros/s/AKfycbyAqOofycA-Q8XG02q249kgNzWDsyDooGlkHilxtVHxXwVi54h12HFy-eP46ysOvzu-/exec")
+  .then(r => r.json())
+  .then(data => {
+    document.getElementById("list").innerHTML =
+      data.map(d =>
+        `<div class="item">
+          ${d.county}${d.town}（${d.name}）
+          <span class="temp">${d.temp}°C</span>
+        </div>`
+      ).join("");
+  })
+  .catch(() => {
+    document.getElementById("list").innerText = "讀取失敗";
+  });
+</script>
+</body>
+</html>
