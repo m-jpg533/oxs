@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<title>LINE 官方級貼圖產生器</title>
+<style>
+body{
+  background:#f2f2f2;
+  font-family:Microsoft JhengHei;
+  text-align:center;
+}
+canvas{
+  background:transparent;
+  max-width:90%;
+}
+input,button{
+  font-size:16px;
+  margin:6px;
+  padding:6px 12px;
+}
+</style>
+</head>
+<body>
+
+<h2>LINE 官方級貼圖產生器</h2>
+
+<input type="file" accept="image/*" id="upload"><br>
+<input type="text" id="text" placeholder="輸入貼圖文字（可空白）"><br>
+
+<canvas id="c" width="512" height="512"></canvas><br>
+
+<button onclick="saveSticker()">下載貼圖 PNG</button>
+<button onclick="saveAvatar()">下載大頭貼 PNG</button>
+
+<script>
+const c = document.getElementById("c");
+const ctx = c.getContext("2d");
+const upload = document.getElementById("upload");
+const textInput = document.getElementById("text");
+
+let lastImage = null;
+
+upload.onchange = e => {
+  const img = new Image();
+  img.onload = () => {
+    lastImage = img;
+    render();
+  };
+  img.src = URL.createObjectURL(e.target.files[0]);
+};
+
+textInput.oninput = render;
+
+function render(){
+  if(!lastImage) return;
+  ctx.clearRect(0,0,512,512);
+
+  const img = lastImage;
+
+  // === 裁切 ===
+  const size = Math.min(img.width, img.height);
+  const sx = (img.width - size) / 2;
+  const sy = (img.height - size) / 2;
+
+  // === 主體（安全邊）===
+  ctx.filter = "contrast(1.2) saturate(1.15) brightness(1.05)";
+  ctx.drawImage(img, sx, sy, size, size, 96, 80, 320, 320);
+  ctx.filter = "none";
+
+  // === 去背 + 柔白邊（頭髮友善）===
+  let imgData = ctx.getImageData(0,0,512,512);
+  let d = imgData.data;
+  let copy = new Uint8ClampedArray(d);
+
+  for(let y=1;y<511;y++){
+    for(let x=1;x<511;x++){
+      const i=(y*512+x)*4;
+      if(copy[i+3]<30){
+        let near=false;
+        for(let dx=-2;dx<=2;dx++){
+          for(let dy=-2;dy<=2;dy++){
+            const ni=((y+dy)*512+(x+dx))*4;
+            if(copy[ni+3]>60) near=true;
+          }
+        }
+        if(near){
+          d[i]=255; d[i+1]=255; d[i+2]=255;
+          d[i+3]=180; // 半透明柔邊
+        }
+      }
+    }
+  }
+  ctx.putImageData(imgData,0,0);
+
+  // === LINE 文字 ===
+  const txt = textInput.value.trim();
+  if(txt){
+    ctx.font = "bold 48px Microsoft JhengHei";
+    ctx.textAlign = "center";
+    ctx.lineWidth = 10;
+    ctx.strokeStyle = "#000";
+    ctx.fillStyle = "#fff";
+    ctx.strokeText(txt,256,450);
+    ctx.fillText(txt,256,450);
+  }
+}
+
+// === 下載貼圖 ===
+function saveSticker(){
+  c.toBlob(b=>{
+    download(b,"LINE_sticker.png");
+  },"image/png");
+}
+
+// === 下載大頭貼（轉成方形安全版）===
+function saveAvatar(){
+  const a = document.createElement("canvas");
+  a.width = a.height = 1024;
+  const actx = a.getContext("2d");
+  actx.clearRect(0,0,1024,1024);
+  actx.drawImage(c,0,0,512,512,128,128,768,768);
+  a.toBlob(b=>{
+    download(b,"LINE_avatar.png");
+  },"image/png");
+}
+
+function download(blob,name){
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download=name;
+  a.click();
+}
+</script>
+</body>
+</html>
