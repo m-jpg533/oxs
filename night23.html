@@ -1,0 +1,378 @@
+<!-- <!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI DJ RADAR · HUD CORE</title>
+
+<style>
+html,body{
+  margin:0;
+  background:#000;
+  overflow:hidden;
+  font-family:monospace;
+  color:#00ffcc;
+}
+
+/* ===== 中央 AI CORE ===== */
+#core{
+  position:absolute;
+  inset:0;
+  margin:auto;
+  width:70vmin;
+  height:70vmin;
+  border-radius:50%;
+  background:radial-gradient(circle,#00ffcc 2%,#000 70%);
+  box-shadow:0 0 80px #00ffcc;
+  animation:spin 6s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ===== HUD 面板 ===== */
+.panel{
+  position:fixed;
+  width:260px;
+  padding:14px;
+  border:1px solid #00ffcc;
+  box-shadow:0 0 20px #00ffcc;
+  background:rgba(0,0,0,.6);
+}
+#weatherPanel{top:20px;left:20px}
+#audioPanel{top:20px;right:20px}
+
+/* ===== 狀態文字 ===== */
+.label{opacity:.6;font-size:12px}
+.value{font-size:18px;margin-top:4px}
+
+/* ===== 狀態列 ===== */
+#status{
+  position:fixed;
+  bottom:20px;
+  left:50%;
+  transform:translateX(-50%);
+  opacity:.7;
+}
+
+/* ===== 啟動畫面 ===== */
+#start{
+  position:fixed;
+  inset:0;
+  background:black;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:99;
+}
+button{
+  font-size:22px;
+  padding:20px 40px;
+  border-radius:16px;
+  background:#00ffcc;
+  border:none;
+}
+</style>
+</head>
+
+<body>
+
+<div id="core"></div>
+
+<!-- 🌦 氣象設備 -->
+<div class="panel" id="weatherPanel">
+  <div class="label">WEATHER NODE</div>
+  <div class="value" id="loc">--</div>
+  <div class="value" id="temp">--</div>
+  <div class="value" id="wx">--</div>
+</div>
+
+<!-- 🎧 音訊設備 -->
+<div class="panel" id="audioPanel">
+  <div class="label">AUDIO ENGINE</div>
+  <div class="value" id="bass">BASS: --</div>
+  <div class="value" id="drop">DROP: STANDBY</div>
+</div>
+
+<div id="status">SYSTEM ONLINE · AI MODE ACTIVE</div>
+
+<div id="start">
+  <button onclick="start()">▶ ACTIVATE SYSTEM</button>
+</div>
+
+<audio id="music" loop crossorigin="anonymous">
+  <source src="https://m-jpg533.github.io/oxs/37.mp4">
+</audio>
+
+<script>
+/* ===== 設備元件 ===== */
+const music = document.getElementById("music");
+const core = document.getElementById("core");
+
+const locEl = document.getElementById("loc");
+const tempEl = document.getElementById("temp");
+const wxEl = document.getElementById("wx");
+
+const bassEl = document.getElementById("bass");
+const dropEl = document.getElementById("drop");
+
+/* ===== 你的 GAS（全台即時） ===== */
+const GAS_URL =
+"https://script.google.com/macros/s/AKfycbyc_9hqY2ks-9XGxMAy5cHSvGYaELvw_HKypoj5Gx9frB3ikg6uodC0zNmIJCy47f/exec";
+
+let weather=[], wi=0;
+
+/* ===== 音訊 AI ===== */
+let ctx, analyser, data, lastBass=0;
+
+function audioAI(){
+  ctx=new (AudioContext||webkitAudioContext)();
+  const src=ctx.createMediaElementSource(music);
+  analyser=ctx.createAnalyser();
+  analyser.fftSize=256;
+  data=new Uint8Array(analyser.frequencyBinCount);
+  src.connect(analyser);
+  analyser.connect(ctx.destination);
+  tick();
+}
+
+function tick(){
+  analyser.getByteFrequencyData(data);
+  const bass=data.slice(0,30).reduce((a,b)=>a+b,0)/30;
+  bassEl.innerText="BASS: "+bass.toFixed(0);
+
+  if(bass-lastBass>40){
+    dropEl.innerText="DROP: FIRED";
+    core.style.boxShadow="0 0 160px white";
+    core.style.animationDuration="1.2s";
+    setTimeout(()=>{
+      core.style.boxShadow="0 0 80px #00ffcc";
+      core.style.animationDuration="6s";
+      dropEl.innerText="DROP: READY";
+    },200);
+  }
+  lastBass=bass;
+  requestAnimationFrame(tick);
+}
+
+/* ===== 全台氣象輪播 ===== */
+function loadWeather(){
+  fetch(GAS_URL)
+  .then(r=>r.json())
+  .then(d=>{
+    weather=d.filter(w=>w.temp>-50); // 🚫 移除 -99
+    showWeather();
+    setInterval(showWeather,8000);
+  });
+}
+
+function showWeather(){
+  const w=weather[wi];
+  locEl.innerText="📍 "+w.location;
+  tempEl.innerText="🌡 "+w.temp+" °C";
+  wxEl.innerText="☁️ "+w.weather;
+
+  if(w.weather.includes("雨")){
+    core.style.background="radial-gradient(circle,#0099ff,#000)";
+  }else{
+    core.style.background="radial-gradient(circle,#00ff66,#000)";
+  }
+  wi=(wi+1)%weather.length;
+}
+
+/* ===== 啟動（手機必有聲） ===== */
+function start(){
+  music.play();
+  audioAI();
+  loadWeather();
+  document.getElementById("start").style.display="none";
+}
+</script>
+
+</body>
+</html> -->
+
+
+
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI DJ RADAR · DROP MODE</title>
+
+<style>
+html,body{
+  margin:0;
+  background:black;
+  overflow:hidden;
+  font-family:monospace;
+  color:#00ffcc;
+}
+
+/* ===== RADAR ===== */
+#radar{
+  width:100vw;
+  height:100vh;
+  background:radial-gradient(circle,#00ff66 2%,#000 70%);
+  animation:spin 4s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ===== HUD ===== */
+#hud{
+  position:fixed;
+  top:12px;
+  left:12px;
+  z-index:10;
+  text-shadow:0 0 12px #00ffcc;
+}
+#hud div{margin-bottom:6px}
+
+/* ===== START ===== */
+#start{
+  position:fixed;
+  inset:0;
+  background:black;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  z-index:99;
+}
+button{
+  font-size:22px;
+  padding:20px 40px;
+  border-radius:16px;
+  background:#00ffcc;
+  border:none;
+}
+</style>
+</head>
+
+<body>
+
+<div id="radar"></div>
+
+<div id="hud">
+  <div id="loc">📡 WEATHER NODE</div>
+  <div id="temp">🌡 -- °C</div>
+  <div id="wx">☁️ --</div>
+</div>
+
+<div id="start">
+  <button onclick="start()">▶ TAP TO START DROP</button>
+</div>
+
+<audio id="music" loop crossorigin="anonymous">
+  <source src="https://m-jpg533.github.io/oxs/37.mp4">
+</audio>
+
+<script>
+/* =====================
+   🔗 GAS WEB APP URL
+   （一定要是 /exec）
+===================== */
+const GAS_URL =
+"https://script.google.com/macros/s/AKfycbzSOwakS3mC9k2e8cHKVqSLEtUkkoCkuovQJlurl7YaiUgJH8TreYQJ75YQirwju--R/exec";
+
+/* ===== DOM ===== */
+const radar = document.getElementById("radar");
+const music = document.getElementById("music");
+const locEl = document.getElementById("loc");
+const tempEl = document.getElementById("temp");
+const wxEl = document.getElementById("wx");
+
+/* ===== AUDIO AI ===== */
+let ctx, analyser, data;
+let lastBass = 0;
+
+function audioAI(){
+  ctx = new (window.AudioContext||window.webkitAudioContext)();
+  const src = ctx.createMediaElementSource(music);
+  analyser = ctx.createAnalyser();
+  analyser.fftSize = 256;
+  data = new Uint8Array(analyser.frequencyBinCount);
+  src.connect(analyser);
+  analyser.connect(ctx.destination);
+  tick();
+}
+
+function tick(){
+  analyser.getByteFrequencyData(data);
+  const bass = data.slice(0,30).reduce((a,b)=>a+b,0)/30;
+
+  if(bass - lastBass > 35){
+    radar.style.boxShadow="0 0 160px #00ffff";
+    radar.style.animationDuration="1.2s";
+    setTimeout(()=>{
+      radar.style.boxShadow="";
+      radar.style.animationDuration="4s";
+    },120);
+  }
+  lastBass = bass;
+  requestAnimationFrame(tick);
+}
+
+/* =====================
+   🌦 WEATHER NORMALIZER
+   （關鍵核心）
+===================== */
+function normalizeWeatherData(d){
+  if(Array.isArray(d)) return d;
+  if(Array.isArray(d.result)) return d.result;
+  if(Array.isArray(d.data)) return d.data;
+  return [];
+}
+
+/* ===== WEATHER ===== */
+let weather=[], idx=0;
+
+function loadWeather(){
+  fetch(GAS_URL)
+    .then(r=>r.json())
+    .then(d=>{
+      weather = normalizeWeatherData(d);
+
+      if(weather.length===0){
+        locEl.innerText="⚠ NO WEATHER DATA";
+        return;
+      }
+
+      showWeather();
+      setInterval(showWeather,8000);
+    })
+    .catch(e=>{
+      locEl.innerText="❌ WEATHER ERROR";
+      console.error(e);
+    });
+}
+
+function showWeather(){
+  const w = weather[idx];
+  if(!w) return;
+
+  locEl.innerText = "📍 " + w.location;
+  tempEl.innerText = `🌡 ${w.temp} °C`;
+  wxEl.innerText = "☁️ " + w.weather;
+
+  /* 雷達視覺 */
+  if(String(w.weather).includes("雨")){
+    radar.style.background="radial-gradient(circle,#0099ff,#000)";
+  }else if(Number(w.temp) < 10){
+    radar.style.background="radial-gradient(circle,#aa66ff,#000)";
+  }else{
+    radar.style.background="radial-gradient(circle,#00ff66,#000)";
+  }
+
+  idx = (idx + 1) % weather.length;
+}
+
+/* ===== START ===== */
+function start(){
+  music.play();     // 📱 手機必須手動
+  audioAI();        // DROP AI
+  loadWeather();    // 全台氣象
+  document.getElementById("start").style.display="none";
+}
+</script>
+
+</body>
+</html>
