@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<title>台灣即時雷達測站（中央氣象署）</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- Leaflet -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<style>
+html, body, #map {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  background: #000;
+}
+
+.station-label {
+  color: #00ffff;
+  font-size: 12px;
+  line-height: 1.2;
+  white-space: nowrap;
+  text-shadow: 0 0 4px #00ffff;
+}
+
+@media (max-width: 600px) {
+  .station-label {
+    font-size: 10px;
+  }
+}
+</style>
+</head>
+
+<body>
+<div id="map"></div>
+
+<script>
+/* =========================
+   地圖初始化
+========================= */
+const map = L.map('map', {
+  center: [23.7, 121],
+  zoom: 7,
+  zoomControl: false
+});
+
+L.tileLayer(
+  'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+  { attribution: '' }
+).addTo(map);
+
+/* =========================
+   中央氣象署雷達（真實）
+========================= */
+const radarLayer = L.tileLayer.wms(
+  'https://opengeo.cwa.gov.tw/geoserver/cwa/wms',
+  {
+    layers: 'cwa:CV1_3600',
+    format: 'image/png',
+    transparent: true,
+    opacity: 0.6
+  }
+);
+radarLayer.addTo(map);
+
+/* =========================
+   顯示用城市（不是測站）
+========================= */
+const cities = [
+  { name: "台北", lat:25.0375, lng:121.5637 },
+  { name: "新北", lat:25.0120, lng:121.4650 },
+  { name: "桃園", lat:24.9930, lng:121.3010 },
+  { name: "台中", lat:24.1477, lng:120.6736 },
+  { name: "嘉義", lat:23.4801, lng:120.4491 },
+  { name: "台南", lat:22.9999, lng:120.2269 },
+  { name: "高雄", lat:22.6273, lng:120.3014 },
+  { name: "屏東", lat:22.5519, lng:120.5487 },
+  { name: "台東", lat:22.7583, lng:121.1444 },
+  { name: "花蓮", lat:23.9872, lng:121.6015 }
+];
+
+/* =========================
+   建立標籤與雷達圈
+========================= */
+cities.forEach(c => {
+  c.label = L.marker([c.lat, c.lng], {
+    icon: L.divIcon({
+      className: 'station-label',
+      html: `<b>${c.name}</b><br>--°C`,
+      iconAnchor: [-10, -10]
+    })
+  }).addTo(map);
+
+  const radar = L.circle([c.lat, c.lng], {
+    radius: 18000,
+    color: '#00ffff',
+    weight: 1,
+    opacity: 0.6,
+    fillOpacity: 0
+  }).addTo(map);
+
+  let grow = true;
+  setInterval(() => {
+    let r = radar.getRadius();
+    radar.setRadius(grow ? r + 1000 : r - 1000);
+    if (r > 32000) grow = false;
+    if (r < 16000) grow = true;
+  }, 120);
+});
+
+/* =========================
+   中央氣象署即時測站
+========================= */
+const API_KEY = "CWA-6DEFC9E1-5016-483E-9751-F71428FEE7D3";
+const API_URL =
+`https://opendata.cwa.gov.tw/api/v1/rest/datastore/O-A0003-001?Authorization=${API_KEY}&format=JSON`;
+
+/* 計算距離（公里） */
+function distance(lat1, lon1, lat2, lon2) {
+  const R = 6371;
+  const dLat = (lat2-lat1) * Math.PI/180;
+  const dLon = (lon2-lon1) * Math.PI/180;
+  const a =
+    Math.sin(dLat/2)**2 +
+    Math.cos(lat1*Math.PI/180) *
+    Math.cos(lat2*Math.PI/180) *
+    Math.sin(dLon/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+/* 更新溫度 */
+async function updateWeather() {
+  try {
+    const res = await fetch(API_URL);
+    const data = await res.json();
+    const stations = data.records.Station;
+
+    cities.forEach(city => {
+      let nearest = null;
+      let minD = Infinity;
+
+      stations.forEach(s => {
+        const d = distance(
+          city.lat, city.lng,
+          parseFloat(s.GeoInfo.Coordinates[1].StationLatitude),
+          parseFloat(s.GeoInfo.Coordinates[1].StationLongitude)
+        );
+        if (d < minD) {
+          minD = d;
+          nearest = s;
+        }
+      });
+
+      if (nearest) {
+        const e = nearest.WeatherElement;
+        const t = parseFloat(e.AirTemperature);
+        const h = parseFloat(e.RelativeHumidity);
+        const w = parseFloat(e.WindSpeed);
+
+        city.label.setIcon(
+          L.divIcon({
+            className:'station-label',
+            html: `
+              <b>${city.name}</b><br>
+              ${t.toFixed(1)}°C
+              💧${h}%
+              🌬${w}m/s
+            `,
+            iconAnchor:[-10,-10]
+          })
+        );
+      }
+    });
+
+  } catch (err) {
+    console.error("氣象更新失敗", err);
+  }
+}
+
+updateWeather();
+setInterval(updateWeather, 10 * 60 * 1000);
+</script>
+</body>
+</html>
