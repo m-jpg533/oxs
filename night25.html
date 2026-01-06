@@ -3,10 +3,9 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
-<title>台灣即時雷達測站（真實地圖）</title>
+<title>台灣即時雷達測站（含即時溫度）</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<!-- Leaflet -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
@@ -15,9 +14,6 @@ html,body,#map{
   margin:0;
   width:100%;
   height:100%;
-  background:#000;
-}
-.leaflet-container{
   background:#000;
 }
 .station-label{
@@ -34,7 +30,7 @@ html,body,#map{
 
 <script>
 /* =========================
-   地圖初始化（真實世界）
+   地圖
 ========================= */
 const map = L.map('map',{
   center:[23.7,121],
@@ -42,77 +38,88 @@ const map = L.map('map',{
   zoomControl:false
 });
 
-/* 深色世界底圖 */
 L.tileLayer(
-  'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-  {attribution:''}
+  'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
 ).addTo(map);
 
 /* =========================
-   真實測站資料
+   測站
 ========================= */
 const stations = [
-  { name:"台北", lat:25.0375, lng:121.5637 },
+  { name:"臺北", lat:25.0375, lng:121.5637 },
   { name:"新北", lat:25.0120, lng:121.4650 },
   { name:"桃園", lat:24.9930, lng:121.3010 },
-  { name:"台中", lat:24.1477, lng:120.6736 },
+  { name:"臺中", lat:24.1477, lng:120.6736 },
   { name:"嘉義", lat:23.4801, lng:120.4491 },
-  { name:"台南", lat:22.9999, lng:120.2269 },
+  { name:"臺南", lat:22.9999, lng:120.2269 },
   { name:"高雄", lat:22.6273, lng:120.3014 },
   { name:"屏東", lat:22.5519, lng:120.5487 },
-  { name:"台東", lat:22.7583, lng:121.1444 },
+  { name:"臺東", lat:22.7583, lng:121.1444 },
   { name:"花蓮", lat:23.9872, lng:121.6015 }
 ];
 
-/* =========================
-   雷達動畫
-========================= */
-stations.forEach((s,i)=>{
-  /* 中心點 */
-  L.circleMarker([s.lat,s.lng],{
-    radius:4,
-    color:'#0ff',
-    fillColor:'#0ff',
-    fillOpacity:1
-  }).addTo(map);
-
-  /* 雷達圈（公尺） */
-  const radar = L.circle([s.lat,s.lng],{
-    radius:26000,
-    color:'#0ff',
-    weight:1,
-    opacity:0.6,
-    fillOpacity:0
-  }).addTo(map);
-
-  /* 文字標籤 */
-  L.marker([s.lat,s.lng],{
+/* Marker & Label */
+stations.forEach(s=>{
+  s.label = L.marker([s.lat,s.lng],{
     icon:L.divIcon({
       className:'station-label',
       html:`${s.name} --°C`,
-      iconSize:[80,20],
       iconAnchor:[-10,-10]
     })
   }).addTo(map);
 
-  /* 呼吸動畫 */
+  const radar = L.circle([s.lat,s.lng],{
+    radius:25000,
+    color:'#0ff',
+    opacity:0.6,
+    fillOpacity:0
+  }).addTo(map);
+
   let grow=true;
   setInterval(()=>{
     let r = radar.getRadius();
-    if(grow){
-      r+=1500;
-      if(r>42000) grow=false;
-    }else{
-      r-=1500;
-      if(r<20000) grow=true;
-    }
-    radar.setRadius(r);
+    radar.setRadius(grow ? r+1200 : r-1200);
+    if(r>42000) grow=false;
+    if(r<20000) grow=true;
   },120);
 });
+
+/* =========================
+   🌡 中央氣象署即時溫度
+========================= */
+const API_KEY = "CWA-6DEFC9E1-5016-483E-9751-F71428FEE7D3";
+const API_URL =
+`https://opendata.cwa.gov.tw/api/v1/rest/datastore/O-A0003-001?Authorization=${API_KEY}&format=JSON`;
+
+async function updateTemperature(){
+  try{
+    const res = await fetch(API_URL);
+    const data = await res.json();
+    const list = data.records.Station;
+
+    stations.forEach(s=>{
+      const m = list.find(v => v.StationName.includes(s.name));
+      if(m){
+        const t = parseFloat(m.WeatherElement.AirTemperature);
+        if(!isNaN(t)){
+          s.label.setIcon(
+            L.divIcon({
+              className:'station-label',
+              html:`${s.name} ${t.toFixed(1)}°C`,
+              iconAnchor:[-10,-10]
+            })
+          );
+        }
+      }
+    });
+  }catch(e){
+    console.warn("溫度更新失敗",e);
+  }
+}
+
+updateTemperature();
+setInterval(updateTemperature, 10*60*1000);
 </script>
 
 </body>
 </html>
-
- 
- 
