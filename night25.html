@@ -1,0 +1,118 @@
+
+ <!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<title>台灣即時雷達測站（真實地圖）</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- Leaflet -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<style>
+html,body,#map{
+  margin:0;
+  width:100%;
+  height:100%;
+  background:#000;
+}
+.leaflet-container{
+  background:#000;
+}
+.station-label{
+  color:#0ff;
+  font-size:12px;
+  white-space:nowrap;
+  text-shadow:0 0 4px #0ff;
+}
+</style>
+</head>
+
+<body>
+<div id="map"></div>
+
+<script>
+/* =========================
+   地圖初始化（真實世界）
+========================= */
+const map = L.map('map',{
+  center:[23.7,121],
+  zoom:7,
+  zoomControl:false
+});
+
+/* 深色世界底圖 */
+L.tileLayer(
+  'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+  {attribution:''}
+).addTo(map);
+
+/* =========================
+   真實測站資料
+========================= */
+const stations = [
+  { name:"台北", lat:25.0375, lng:121.5637 },
+  { name:"新北", lat:25.0120, lng:121.4650 },
+  { name:"桃園", lat:24.9930, lng:121.3010 },
+  { name:"台中", lat:24.1477, lng:120.6736 },
+  { name:"嘉義", lat:23.4801, lng:120.4491 },
+  { name:"台南", lat:22.9999, lng:120.2269 },
+  { name:"高雄", lat:22.6273, lng:120.3014 },
+  { name:"屏東", lat:22.5519, lng:120.5487 },
+  { name:"台東", lat:22.7583, lng:121.1444 },
+  { name:"花蓮", lat:23.9872, lng:121.6015 }
+];
+
+/* =========================
+   雷達動畫
+========================= */
+stations.forEach((s,i)=>{
+  /* 中心點 */
+  L.circleMarker([s.lat,s.lng],{
+    radius:4,
+    color:'#0ff',
+    fillColor:'#0ff',
+    fillOpacity:1
+  }).addTo(map);
+
+  /* 雷達圈（公尺） */
+  const radar = L.circle([s.lat,s.lng],{
+    radius:26000,
+    color:'#0ff',
+    weight:1,
+    opacity:0.6,
+    fillOpacity:0
+  }).addTo(map);
+
+  /* 文字標籤 */
+  L.marker([s.lat,s.lng],{
+    icon:L.divIcon({
+      className:'station-label',
+      html:`${s.name} --°C`,
+      iconSize:[80,20],
+      iconAnchor:[-10,-10]
+    })
+  }).addTo(map);
+
+  /* 呼吸動畫 */
+  let grow=true;
+  setInterval(()=>{
+    let r = radar.getRadius();
+    if(grow){
+      r+=1500;
+      if(r>42000) grow=false;
+    }else{
+      r-=1500;
+      if(r<20000) grow=true;
+    }
+    radar.setRadius(r);
+  },120);
+});
+</script>
+
+</body>
+</html>
+
+ 
+ 
