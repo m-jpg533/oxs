@@ -1,0 +1,260 @@
+<!-- <!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>精準台灣雷達測站</title>
+
+<!-- Leaflet -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<style>
+html, body {
+  margin: 0;
+  background: black;
+  height: 100%;
+}
+#map {
+  width: 100vw;
+  height: 100vh;
+}
+
+/* 文字樣式 */
+.station-label {
+  color: #00ff66;
+  font-size: 14px;
+  font-family: monospace;
+  text-shadow: 0 0 6px #00ff66;
+}
+</style>
+</head>
+
+<body>
+<div id="map"></div>
+
+<script>
+// 初始化地圖（鎖定台灣）
+const map = L.map('map', {
+  zoomControl: false
+}).setView([23.7, 121], 7);
+
+// 黑色風格地圖
+L.tileLayer(
+  'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+  { maxZoom: 19 }
+).addTo(map);
+
+// 測站資料（真實座標）
+const stations = [
+  { name: '台北', lat: 25.0375, lng: 121.5637, temp: 14.5 },
+  { name: '新北', lat: 25.012, lng: 121.465, temp: 14.9 },
+  { name: '桃園', lat: 24.993, lng: 121.301, temp: 15.2 },
+  { name: '台中', lat: 24.1477, lng: 120.6736, temp: 16.9 },
+  { name: '嘉義', lat: 23.4801, lng: 120.4491, temp: 16.3 },
+  { name: '台南', lat: 22.9999, lng: 120.2269, temp: 16.6 },
+  { name: '高雄', lat: 22.6273, lng: 120.3014, temp: 17.8 },
+  { name: '屏東', lat: 22.5519, lng: 120.5487, temp: 19.8 },
+  { name: '台東', lat: 22.7583, lng: 121.1444, temp: 19.7 },
+  { name: '花蓮', lat: 23.9872, lng: 121.6015, temp: 17.2 }
+];
+
+// 畫測站
+stations.forEach(s => {
+
+  // 雷達圈
+  L.circle([s.lat, s.lng], {
+    radius: 40000,
+    color: '#00ff66',
+    weight: 1.5,
+    fillColor: '#00ff66',
+    fillOpacity: 0.05
+  }).addTo(map);
+
+  // 核心點
+  L.circleMarker([s.lat, s.lng], {
+    radius: 6,
+    color: '#00ff66',
+    fillColor: '#00ff66',
+    fillOpacity: 1
+  }).addTo(map);
+
+  // 文字標籤
+  L.marker([s.lat, s.lng], {
+    icon: L.divIcon({
+      className: 'station-label',
+      html: `${s.name} ${s.temp}°C`,
+      iconSize: [120, 20],
+      iconAnchor: [-10, -10]
+    })
+  }).addTo(map);
+
+});
+</script>
+</body>
+</html>
+ -->
+ 
+ 
+ 
+ <!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>台灣即時氣象雷達（中央氣象署）</title>
+
+<style>
+html,body{
+  margin:0;
+  background:#000;
+  overflow:hidden;
+  font-family:"Noto Sans TC",sans-serif;
+}
+canvas{display:block;}
+</style>
+</head>
+<body>
+
+<canvas id="map"></canvas>
+
+<script>
+/* =========================
+   基本設定
+========================= */
+const canvas = document.getElementById("map");
+const ctx = canvas.getContext("2d");
+
+function resize(){
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+resize();
+window.addEventListener("resize", resize);
+
+/* =========================
+   真・台灣 GeoJSON（簡化但比例正確）
+   來源：Open Data
+========================= */
+const taiwanGeo = [
+  [120.0,25.3],[121.9,25.3],[122.1,24.6],[121.8,23.7],
+  [121.4,22.8],[120.7,21.9],[120.1,22.1],[119.9,22.6],
+  [120.0,23.3],[120.3,24.0],[120.0,25.3]
+];
+
+/* =========================
+   主要測站（可擴充）
+========================= */
+
+const stations = [
+  { name: '台北', lat: 25.0375, lng: 121.5637, temp:"--" },
+  { name: '新北', lat: 25.012, lng: 121.465, temp:"--"  },
+  { name: '桃園', lat: 24.993, lng: 121.301, temp:"--"  },
+  { name: '台中', lat: 24.1477, lng: 120.6736, temp:"--"  },
+  { name: '嘉義', lat: 23.4801, lng: 120.4491, temp:"--"  },
+  { name: '台南', lat: 22.9999, lng: 120.2269, temp:"--"  },
+  { name: '高雄', lat: 22.6273, lng: 120.3014, temp:"--"  },
+  { name: '屏東', lat: 22.5519, lng: 120.5487, temp:"--"  },
+  { name: '台東', lat: 22.7583, lng: 121.1444, temp:"--"  },
+  { name: '花蓮', lat: 23.9872, lng: 121.6015, temp:"--"  }
+];
+/* =========================
+   經緯度 → 畫布座標
+========================= */
+function proj(lon,lat){
+  const minLon=119.5,maxLon=122.3;
+  const minLat=21.8,maxLat=25.4;
+  const x=(lon-minLon)/(maxLon-minLon)*canvas.width*0.9+canvas.width*0.05;
+  const y=canvas.height-(lat-minLat)/(maxLat-minLat)*canvas.height*0.9-canvas.height*0.05;
+  return {x,y};
+}
+
+/* =========================
+   雷達動畫
+========================= */
+let pulse=0;
+
+/* =========================
+   主繪圖
+========================= */
+function draw(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  /* 台灣輪廓 */
+  ctx.strokeStyle="#0af";
+  ctx.lineWidth=2;
+  ctx.beginPath();
+  taiwanGeo.forEach((p,i)=>{
+    const c=proj(p[0],p[1]);
+    if(i===0)ctx.moveTo(c.x,c.y);
+    else ctx.lineTo(c.x,c.y);
+  });
+  ctx.closePath();
+  ctx.stroke();
+
+  /* 測站 */
+  stations.forEach((s,i)=>{
+    const p=proj(s.lon,s.lat);
+
+    const r = canvas.width<600 ? 14 : 22; // 手機雷達縮小
+    ctx.strokeStyle=`rgba(0,255,255,${1-pulse})`;
+    ctx.lineWidth=2;
+    ctx.beginPath();
+    ctx.arc(p.x,p.y,r+r*pulse,0,Math.PI*2);
+    ctx.stroke();
+
+    ctx.fillStyle="#0ff";
+    ctx.beginPath();
+    ctx.arc(p.x,p.y,4,0,Math.PI*2);
+    ctx.fill();
+
+    /* 文字偏移（北北桃錯開） */
+    const offset = [
+      {x:10,y:-10},
+      {x:-50,y:0},
+      {x:10,y:18},
+      {x:10,y:0},
+      {x:10,y:0}
+    ][i] || {x:10,y:0};
+
+    ctx.fillStyle="#fff";
+    ctx.font="14px sans-serif";
+    ctx.fillText(`${s.name} ${s.temp}°C`,p.x+offset.x,p.y+offset.y);
+  });
+
+  pulse+=0.01;
+  if(pulse>1)pulse=0;
+
+  requestAnimationFrame(draw);
+}
+draw();
+
+/* =========================
+   🔴 中央氣象署即時資料
+========================= */
+const API_KEY="CWA-6DEFC9E1-5016-483E-9751-F71428FEE7D3";
+const API_URL=
+`https://opendata.cwa.gov.tw/api/v1/rest/datastore/O-A0003-001?Authorization=${API_KEY}&format=JSON`;
+
+async function updateTemp(){
+  try{
+    const r=await fetch(API_URL);
+    const j=await r.json();
+    const list=j.records.Station;
+
+    stations.forEach(s=>{
+      const m=list.find(v=>v.StationName.includes(s.name));
+      if(m){
+        const t=parseFloat(m.WeatherElement.AirTemperature);
+        if(!isNaN(t)) s.temp=t.toFixed(1);
+      }
+    });
+  }catch(e){
+    console.warn("氣象資料失敗",e);
+  }
+}
+updateTemp();
+setInterval(updateTemp,60000);
+</script>
+
+</body>
