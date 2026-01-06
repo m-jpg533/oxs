@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>全台即時測站雷達化 · 空間定位版</title>
+
+<style>
+html,body{
+  margin:0;
+  background:#000;
+  overflow:hidden;
+}
+canvas{display:block}
+#hud{
+  position:fixed;
+  left:10px;
+  bottom:10px;
+  color:#0f0;
+  font-family:monospace;
+  font-size:12px;
+  opacity:.8;
+}
+</style>
+</head>
+
+<body>
+<canvas id="cv"></canvas>
+<div id="hud">TAIWAN LIVE DATA RADAR · LABEL FIX</div>
+
+<script>
+/* =========================
+   Canvas
+========================= */
+const isMobile = Math.min(innerWidth, innerHeight) < 600;
+
+const cv = document.getElementById("cv");
+const ctx = cv.getContext("2d");
+
+function resize(){
+  cv.width = innerWidth;
+  cv.height = innerHeight;
+}
+addEventListener("resize",resize);
+resize();
+
+
+/* =========================
+   台灣測站
+========================= */
+let stations = [
+ {name:"臺北",lat:25.04,lon:121.56},
+ {name:"新北",lat:25.01,lon:121.46},
+ {name:"桃園",lat:24.99,lon:121.31},
+ {name:"新竹",lat:24.81,lon:120.97},
+ {name:"臺中",lat:24.15,lon:120.67},
+ {name:"嘉義",lat:23.48,lon:120.44},
+ {name:"臺南",lat:22.99,lon:120.21},
+ {name:"高雄",lat:22.63,lon:120.30},
+ {name:"屏東",lat:22.67,lon:120.49},
+ {name:"宜蘭",lat:24.76,lon:121.75},
+ {name:"花蓮",lat:23.97,lon:121.60},
+ {name:"臺東",lat:22.75,lon:121.15}
+];
+
+stations.forEach(s => s.temp = NaN);
+
+/* =========================
+   北部文字偏移設定
+========================= */
+const labelOffset = isMobile
+? {
+    // 📱 手機（大幅拉開）
+    "臺北": { x: 28,  y: -42 },
+    "新北": { x: -70, y: 34 },
+    "桃園": { x: -62, y: -40 }
+  }
+: {
+    // 🖥 桌機
+    "臺北": { x: 14,  y: -18 },
+    "新北": { x: -38, y: 12 },
+    "桃園": { x: -30, y: -18 }
+  };
+
+
+/* =========================
+   經緯度 → 畫面
+========================= */
+const latR={min:21.7,max:25.5};
+const lonR={min:119.5,max:122.3};
+
+const mapX = lon => (lon-lonR.min)/(lonR.max-lonR.min)*cv.width;
+const mapY = lat => cv.height-(lat-latR.min)/(latR.max-latR.min)*cv.height;
+
+/* =========================
+   使用者定位 = 雷達中心
+========================= */
+let user = {lat:23.8,lon:121};
+navigator.geolocation?.getCurrentPosition(p=>{
+  user.lat=p.coords.latitude;
+  user.lon=p.coords.longitude;
+});
+
+/* =========================
+   中央氣象署 API
+========================= */
+const API_KEY = "CWA-6DEFC9E1-5016-483E-9751-F71428FEE7D3";
+const API_URL =
+`https://opendata.cwa.gov.tw/api/v1/rest/datastore/O-A0003-001?Authorization=${API_KEY}&format=JSON`;
+
+async function loadWeather(){
+  try{
+    const res = await fetch(API_URL);
+    const data = await res.json();
+    const list = data.records.Station;
+
+    stations.forEach(s=>{
+      const st = list.find(r => r.StationName.includes(s.name));
+      if(st){
+        const t = parseFloat(st.WeatherElement.AirTemperature);
+        if(!isNaN(t)) s.temp = t;
+      }
+    });
+  }catch(e){
+    console.warn("氣象 API 讀取失敗");
+  }
+}
+loadWeather();
+setInterval(loadWeather,60000);
+
+/* =========================
+   Animation
+========================= */
+let t=0;
+function draw(){
+  ctx.fillStyle="rgba(0,0,0,.25)";
+  ctx.fillRect(0,0,cv.width,cv.height);
+
+  // 雷達中心
+  const ux = mapX(user.lon);
+  const uy = mapY(user.lat);
+
+  ctx.strokeStyle="rgba(0,255,0,.3)";
+  ctx.beginPath();
+  ctx.arc(ux,uy,60+Math.sin(t)*10,0,Math.PI*2);
+  ctx.stroke();
+
+  ctx.strokeStyle="rgba(0,255,0,.15)";
+  ctx.beginPath();
+  ctx.arc(ux,uy,Math.max(cv.width,cv.height),t,t+.4);
+  ctx.stroke();
+
+  // 測站
+  stations.forEach(s=>{
+    const x = mapX(s.lon);
+    const y = mapY(s.lat);
+    const pulse = 6 + Math.sin(t*2 + s.lat)*3;
+
+    const temp = s.temp;
+    const hue = isNaN(temp) ? 120 : 120 - (temp - 20) * 5;
+
+    // 雷達波
+    ctx.strokeStyle = `hsla(${hue},100%,50%,.25)`;
+    ctx.beginPath();
+    ctx.arc(x,y,pulse,0,Math.PI*2);
+    ctx.stroke();
+
+    // 核心點
+    ctx.fillStyle = `hsl(${hue},100%,60%)`;
+    ctx.beginPath();
+    ctx.arc(x,y,2.5,0,Math.PI*2);
+    ctx.fill();
+
+    // 地點文字（含避讓）
+    const off = labelOffset[s.name] || {x:8,y:8};
+    ctx.fillStyle="#0f0";
+    ctx.font="12px monospace";
+    ctx.textAlign="left";
+    ctx.textBaseline="middle";
+    ctx.fillText(s.name, x + off.x, y + off.y);
+
+    // 溫度文字
+    if(!isNaN(temp)){
+      ctx.font="11px monospace";
+      ctx.fillText(`${temp.toFixed(1)}°C`, x + off.x, y + off.y - 14);
+    }
+  });
+
+  t+=0.01;
+  requestAnimationFrame(draw);
+}
+draw();
+</script>
+</body>
+</html>
