@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>精準台灣雷達測站</title>
+
+<!-- Leaflet -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<style>
+html, body {
+  margin: 0;
+  background: black;
+  height: 100%;
+}
+#map {
+  width: 100vw;
+  height: 100vh;
+}
+
+/* 文字樣式 */
+.station-label {
+  color: #00ff66;
+  font-size: 14px;
+  font-family: monospace;
+  text-shadow: 0 0 6px #00ff66;
+}
+</style>
+</head>
+
+<body>
+<div id="map"></div>
+
+<script>
+// 初始化地圖（鎖定台灣）
+const map = L.map('map', {
+  zoomControl: false
+}).setView([23.7, 121], 7);
+
+// 黑色風格地圖
+L.tileLayer(
+  'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+  { maxZoom: 19 }
+).addTo(map);
+
+// 測站資料（真實座標）
+const stations = [
+  { name: '台北', lat: 25.0375, lng: 121.5637, temp: 14.5 },
+  { name: '新北', lat: 25.012, lng: 121.465, temp: 14.9 },
+  { name: '桃園', lat: 24.993, lng: 121.301, temp: 15.2 },
+  { name: '台中', lat: 24.1477, lng: 120.6736, temp: 16.9 },
+  { name: '嘉義', lat: 23.4801, lng: 120.4491, temp: 16.3 },
+  { name: '台南', lat: 22.9999, lng: 120.2269, temp: 16.6 },
+  { name: '高雄', lat: 22.6273, lng: 120.3014, temp: 17.8 },
+  { name: '屏東', lat: 22.5519, lng: 120.5487, temp: 19.8 },
+  { name: '台東', lat: 22.7583, lng: 121.1444, temp: 19.7 },
+  { name: '花蓮', lat: 23.9872, lng: 121.6015, temp: 17.2 }
+];
+
+// 畫測站
+stations.forEach(s => {
+
+  // 雷達圈
+  L.circle([s.lat, s.lng], {
+    radius: 40000,
+    color: '#00ff66',
+    weight: 1.5,
+    fillColor: '#00ff66',
+    fillOpacity: 0.05
+  }).addTo(map);
+
+  // 核心點
+  L.circleMarker([s.lat, s.lng], {
+    radius: 6,
+    color: '#00ff66',
+    fillColor: '#00ff66',
+    fillOpacity: 1
+  }).addTo(map);
+
+  // 文字標籤
+  L.marker([s.lat, s.lng], {
+    icon: L.divIcon({
+      className: 'station-label',
+      html: `${s.name} ${s.temp}°C`,
+      iconSize: [120, 20],
+      iconAnchor: [-10, -10]
+    })
+  }).addTo(map);
+
+});
+</script>
+</body>
+</html>
