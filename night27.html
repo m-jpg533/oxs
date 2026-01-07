@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<title>台灣即時氣象戰情雷達系統</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- Leaflet -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<style>
+html,body,#map{
+  margin:0;
+  width:100%;
+  height:100%;
+  background:#000;
+}
+.station-label{
+  color:#0ff;
+  font-size:12px;
+  text-shadow:0 0 4px #0ff;
+  white-space:nowrap;
+}
+.alert-hot{
+  color:#f00;
+  animation:blink 1s infinite;
+}
+@keyframes blink{
+  50%{opacity:.3}
+}
+</style>
+</head>
+
+<body>
+<div id="map"></div>
+
+<script>
+/* =========================
+   1️⃣ 地圖初始化（真實台灣）
+========================= */
+const map = L.map('map',{
+  center:[23.7,121],
+  zoom:7,
+  zoomControl:false
+});
+
+L.tileLayer(
+  'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
+).addTo(map);
+
+/* =========================
+   2️⃣ 城市（顯示用，不直接綁測站）
+========================= */
+const cities = [
+  {name:"台北",lat:25.0375,lng:121.5637},
+  {name:"新北",lat:25.012,lng:121.465},
+  {name:"桃園",lat:24.993,lng:121.301},
+  {name:"台中",lat:24.1477,lng:120.6736},
+  {name:"嘉義",lat:23.4801,lng:120.4491},
+  {name:"台南",lat:22.9999,lng:120.2269},
+  {name:"高雄",lat:22.6273,lng:120.3014},
+  {name:"屏東",lat:22.5519,lng:120.5487},
+  {name:"台東",lat:22.7583,lng:121.1444},
+  {name:"花蓮",lat:23.9872,lng:121.6015}
+];
+
+/* =========================
+   3️⃣ 中央氣象署 API
+========================= */
+const API_KEY = "CWA-6DEFC9E1-5016-483E-9751-F71428FEE7D3";
+const API_URL =
+`https://opendata.cwa.gov.tw/api/v1/rest/datastore/O-A0003-001?Authorization=${API_KEY}&format=JSON`;
+
+let stationsData = [];
+
+/* 計算距離（找最近測站） */
+function distance(a,b,c,d){
+  return Math.hypot(a-c,b-d);
+}
+
+/* =========================
+   4️⃣ 建立城市雷達
+========================= */
+cities.forEach(c=>{
+  c.label = L.marker([c.lat,c.lng],{
+    icon:L.divIcon({
+      className:'station-label',
+      html:`${c.name} --°C`,
+      iconAnchor:[-10,-10]
+    })
+  }).addTo(map);
+
+  c.radar = L.circle([c.lat,c.lng],{
+    radius:18000,
+    color:'#0ff',
+    opacity:0.6,
+    fillOpacity:0
+  }).addTo(map);
+
+  /* 雷達動畫 */
+  let grow=true;
+  setInterval(()=>{
+    let r=c.radar.getRadius();
+    c.radar.setRadius(grow ? r+800 : r-800);
+    if(r>35000) grow=false;
+    if(r<16000) grow=true;
+  },120);
+
+  /* 點擊彈出氣象卡片 */
+  c.radar.bindPopup("載入中...");
+});
+
+/* =========================
+   5️⃣ 更新即時溫度（最近測站）
+========================= */
+async function updateWeather(){
+  try{
+    const res = await fetch(API_URL);
+    const data = await res.json();
+    stationsData = data.records.Station;
+
+    cities.forEach(c=>{
+      let nearest=null, min=999;
+      stationsData.forEach(s=>{
+        const d = distance(c.lat,c.lng,s.GeoInfo.Coordinates[1].StationLatitude,
+                           s.GeoInfo.Coordinates[1].StationLongitude);
+        if(d<min){ min=d; nearest=s; }
+      });
+
+      if(nearest){
+        const t = parseFloat(nearest.WeatherElement.AirTemperature);
+        const h = parseFloat(nearest.WeatherElement.RelativeHumidity);
+        const w = parseFloat(nearest.WeatherElement.WindSpeed);
+
+        let cls = t>=36 ? "station-label alert-hot":"station-label";
+
+        c.label.setIcon(L.divIcon({
+          className:cls,
+          html:`${c.name} ${t.toFixed(1)}°C`,
+          iconAnchor:[-10,-10]
+        }));
+
+        c.radar.setPopupContent(`
+          <b>${c.name}</b><br>
+          🌡 ${t.toFixed(1)}°C<br>
+          💧 ${h}%<br>
+          🌬 ${w} m/s<br>
+          🕒 ${nearest.ObsTime.DateTime}
+        `);
+      }
+    });
+
+  }catch(e){
+    console.warn("氣象更新失敗",e);
+  }
+}
+
+updateWeather();
+setInterval(updateWeather,10*60*1000);
+
+/* =========================
+   6️⃣ 使用者定位
+========================= */
+navigator.geolocation?.getCurrentPosition(p=>{
+  L.circleMarker(
+    [p.coords.latitude,p.coords.longitude],
+    {radius:6,color:'#ff0'}
+  ).addTo(map).bindPopup("你在這裡");
+});
+
+/* =========================
+   7️⃣ 真實氣象雷達（降雨）
+========================= */
+L.tileLayer.wms(
+  "https://opengeo.cwa.gov.tw/geoserver/cwa/wms",
+  {
+    layers:"cwa:CV1_3600",
+    format:"image/png",
+    transparent:true,
+    opacity:0.55
+  }
+).addTo(map);
+</script>
+
+</body>
+</html>
