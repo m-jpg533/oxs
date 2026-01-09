@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<title>五畫面</title>
+
+<style>
+html, body {
+  margin: 0;
+  height: 100%;
+  background: black;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  height: 100vh;
+}
+
+.main {
+  grid-row: span 2;
+}
+
+iframe {
+  width: 100%;
+  height: 100%;
+  border: 1px solid #0ff;
+}
+</style>
+</head>
+
+<body>
+
+<div class="layout">
+  <!-- 主畫面 -->
+  <iframe class="main"
+    src="https://m-jpg533.github.io/hh/text_iframe10.html">
+  </iframe>
+
+  <!-- 右上 -->
+  <iframe src="https://m-jpg533.github.io/hh/text_iframe11.html"></iframe>
+
+  <!-- 右下 -->
+  <iframe src="https://m-jpg533.github.io/ppsd/gg.html"></iframe>
+
+  <!-- 左下 -->
+  <iframe src="https://m-jpg533.github.io/ppsd/gu.html"></iframe>
+
+  <!-- 左下第二 -->
+  <iframe src="https://m-jpg533.github.io/ppsd/gb.html"></iframe>
+</div>
+
+</body>
+</html>
