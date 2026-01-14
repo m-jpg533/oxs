@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<title>台灣空域戰情中心</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+html, body {
+  margin: 0;
+  height: 100%;
+  background: #000;
+  font-family: "Microsoft JhengHei", sans-serif;
+  color: #0ff;
+}
+
+/* === 整體格線 === */
+.layout {
+  display: grid;
+  grid-template-columns: 260px 1fr 360px;
+  grid-template-rows: 1fr 70px;
+  height: 100vh;
+}
+
+/* === 區塊樣式 === */
+.panel {
+  border: 1px solid #0ff;
+  box-sizing: border-box;
+}
+
+iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+/* === 左側警報 === */
+.alert {
+  padding: 10px;
+  background: #100;
+}
+
+.alert h2 {
+  color: red;
+  text-align: center;
+  margin-top: 0;
+}
+
+/* === 底部數據列 === */
+.footer {
+  grid-column: span 3;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  background: #020b18;
+  font-size: 18px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="layout">
+
+  <!-- 左側警報區 -->
+  <div class="panel alert">
+    <h2>⚠ 警報狀態</h2>
+    <p>🛩 飛機監控中</p>
+    <p>🚢 共艦監控中</p>
+    <p style="color:red;">❗ 越線即警示</p>
+
+    <!-- 可放警報動畫 -->
+    <iframe src="alert.html"></iframe>
+  </div>
+
+ <!--  <!-- 中央主雷達 -->
+  <div class="panel">
+    <iframe src="taiwan_flight_map.html"></iframe>
+  </div> -->
+<!-- 中央主雷達 -->
+<div class="panel">
+  <iframe
+    
+	src=" https://read-highways-urls-bucks.trycloudflare.com "
+    style="width:100%; height:100%; border:none;"
+    loading="lazy"
+    allowfullscreen>
+  </iframe>
+</div>
+
+  <!-- 右側輔助畫面 -->
+  <div class="panel">
+    <iframe src="radar_video.html"></iframe>
+  </div>
+
+  <!-- 底部數據列 -->
+  <div class="footer panel">
+    <div id="time">時間：--</div>
+    <div id="air">飛機數：--</div>
+    <div id="cross">越線：--</div>
+    <div id="ship">共艦：--</div>
+  </div>
+
+</div>
+
+<script>
+function updateTime() {
+  const now = new Date();
+  document.getElementById("time").innerText =
+    "時間：" + now.toLocaleString();
+}
+setInterval(updateTime, 1000);
+updateTime();
+</script>
+
+</body>
+</html>
