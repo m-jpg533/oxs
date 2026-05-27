@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport"
+content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover">
+
+<title>Q版端午節賀卡</title>
+
+<style>
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+html,body{
+    width:100%;
+    height:100%;
+    overflow:hidden;
+}
+
+/* ===== 手機安全區修正 ===== */
+body{
+    font-family:"Microsoft JhengHei",sans-serif;
+    background:#082b1d;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+}
+
+/* ===== 背景 ===== */
+
+.scene{
+    width:100vw;
+    height:100vh;
+    position:relative;
+    overflow:hidden;
+
+    background:linear-gradient(to bottom,#02150e,#063c28,#0a6b42);
+}
+
+/* ===== 音樂按鈕 ===== */
+
+.music-btn{
+    position:absolute;
+    top:calc(20px + env(safe-area-inset-top));
+    right:20px;
+
+    width:58px;
+    height:58px;
+
+    border:none;
+    border-radius:50%;
+    background:linear-gradient(45deg,#ffcc00,#ff8800);
+    color:white;
+    font-size:24px;
+    z-index:50;
+}
+
+/* ===== 月亮 ===== */
+
+.moon{
+    position:absolute;
+    top:70px;
+    right:40px;
+    width:120px;
+    height:120px;
+    border-radius:50%;
+    background:radial-gradient(circle,#fffde7,#ffe082);
+    box-shadow:0 0 40px gold;
+}
+
+/* ===== 雲 ===== */
+
+.cloud{
+    position:absolute;
+    color:white;
+    opacity:.7;
+    font-size:50px;
+    animation:cloudMove linear infinite;
+}
+
+@keyframes cloudMove{
+    from{transform:translateX(-200px);}
+    to{transform:translateX(120vw);}
+}
+
+/* ===== 河流 ===== */
+
+.river{
+    position:absolute;
+    bottom:0;
+    width:200%;
+    height:180px;
+    background:radial-gradient(circle at 50% 0%,rgba(255,255,255,.25),transparent 70%);
+}
+
+/* ===== 卡片（手機核心修正） ===== */
+
+.card{
+
+    position:absolute;
+    top:50%;
+    left:50%;
+    transform:translate(-50%,-50%);
+
+    width:92%;
+    max-width:420px;
+
+    /* 🔥手機不爆版 */
+    height:auto;
+    min-height:60vh;
+    max-height:80vh;
+
+    border-radius:28px;
+
+    background:rgba(255,255,255,.12);
+    backdrop-filter:blur(15px);
+
+    border:1px solid rgba(255,255,255,.2);
+
+    box-shadow:0 0 40px rgba(0,0,0,.4);
+
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+
+    text-align:center;
+
+    padding:25px;
+}
+
+/* ===== 標題 ===== */
+
+.title{
+    font-size:clamp(34px,8vw,52px);
+    color:#fff3b0;
+    font-weight:bold;
+}
+
+/* ===== 粽子 ===== */
+
+.zongzi{
+    font-size:110px;
+    margin:15px 0;
+    animation:float 3s infinite ease-in-out;
+}
+
+@keyframes float{
+    0%,100%{transform:translateY(0);}
+    50%{transform:translateY(-15px);}
+}
+
+/* ===== 文字 ===== */
+
+.msg{
+    color:white;
+    font-size:18px;
+    line-height:1.7;
+}
+
+/* ===== 按鈕 ===== */
+
+.btn{
+    margin-top:20px;
+    border:none;
+    padding:14px 30px;
+    border-radius:40px;
+    background:linear-gradient(45deg,#00ff99,#00bfff);
+    color:white;
+    font-size:18px;
+}
+
+/* ===== 花瓣 ===== */
+
+.petal{
+    position:absolute;
+    font-size:18px;
+    animation:fall linear infinite;
+}
+
+@keyframes fall{
+    from{transform:translateY(-10vh);}
+    to{transform:translateY(110vh);}
+}
+
+/* ===== 手機再縮 ===== */
+
+@media (max-width:400px){
+
+    .zongzi{font-size:90px;}
+    .msg{font-size:16px;}
+    .btn{font-size:16px;}
+
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="scene">
+
+    <!-- 音樂 -->
+    <button class="music-btn" id="musicBtn" onclick="toggleMusic()">🔊</button>
+
+    <!-- 月亮 -->
+    <div class="moon"></div>
+
+    <!-- 雲 -->
+    <div class="cloud" style="top:120px;animation-duration:25s;">☁️</div>
+
+    <!-- 河流 -->
+    <div class="river"></div>
+
+    <!-- 卡片 -->
+    <div class="card">
+
+        <div class="title">端午安康</div>
+
+        <div class="zongzi">🍙</div>
+
+        <div class="msg">
+            粽香飄滿幸福 ❤️<br>
+            天天好運 🍀<br>
+            平安健康 ✨
+        </div>
+
+        <button class="btn" onclick="showBless()">領取祝福 🎁</button>
+
+    </div>
+
+</div>
+
+<!-- 音樂 -->
+<audio id="bgm" loop>
+<source src="https://m-jpg533.github.io/oxs/57.mp3">
+</audio>
+
+<script>
+
+const bgm=document.getElementById("bgm");
+let playing=true;
+
+/* 點擊啟動音樂 */
+window.addEventListener("click",()=>{
+    bgm.play();
+},{once:true});
+
+/* 開關音樂 */
+function toggleMusic(){
+
+    const btn=document.getElementById("musicBtn");
+
+    if(playing){
+        bgm.pause();
+        btn.innerHTML="🔇";
+    }else{
+        bgm.play();
+        btn.innerHTML="🔊";
+    }
+
+    playing=!playing;
+}
+
+/* 祝福 */
+function showBless(){
+
+    const msgs=[
+        "端午快樂 ❤️",
+        "平安健康 ✨",
+        "財運旺 💰",
+        "天天好心情 🍀"
+    ];
+
+    alert(msgs[Math.floor(Math.random()*msgs.length)]);
+}
+
+</script>
+
+</body>
+</html>
