@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <title>三色連線｜愛因斯坦挑戰</title>
+  <style>
+    :root { --ink:#1e293b; --paper:#f8f5eb; --red:#ef476f; --green:#06b487; --blue:#3185fc; }
+    * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+    body { margin:0; min-height:100svh; color:var(--ink); font-family:system-ui,-apple-system,"Noto Sans TC",sans-serif; background:radial-gradient(circle at 80% 0,#d7f4ff,transparent 30%),var(--paper); display:grid; place-items:center; }
+    .app { width:min(100%,500px); min-height:100svh; padding:calc(16px + env(safe-area-inset-top)) 18px calc(20px + env(safe-area-inset-bottom)); display:flex; flex-direction:column; }
+    header { display:grid; grid-template-columns:74px 1fr auto; gap:10px; align-items:center; }
+    .portrait { width:70px; height:70px; border-radius:50%; object-fit:cover; object-position:center 22%; border:3px solid #fff; box-shadow:0 4px 14px #44556645; filter:grayscale(1) contrast(1.1); background:#d4d4d4; }
+    h1 { margin:0; font-size:clamp(18px,5vw,24px); line-height:1.1; letter-spacing:.02em; }
+    .subtitle { margin:4px 0 0; font-size:12px; color:#64748b; }
+    .timer { font-weight:800; font-variant-numeric:tabular-nums; font-size:22px; color:#0f766e; text-align:right; }
+    .timer.urgent { color:#dc2626; animation:pulse .75s infinite alternate; }
+    @keyframes pulse { to { transform:scale(1.08); } }
+    .sound-button { width:42px; height:42px; padding:0; border-radius:50%; background:#0f766e; box-shadow:0 3px 0 #07534d; font-size:18px; }
+    .sound-button.is-on { background:#e8791b; box-shadow:0 3px 0 #a94c08; }
+    .character-show { min-height:62px; display:flex; justify-content:flex-end; align-items:end; gap:12px; padding:6px 14px 0; }
+    .character { position:relative; width:52px; height:55px; transform-origin:bottom center; }
+    .face { position:absolute; top:2px; left:10px; width:32px; height:32px; border-radius:50%; background:#f3bb8f; border:2px solid #9b5a3f; z-index:2; }
+    .face::before { content:""; position:absolute; top:10px; left:7px; width:5px; height:5px; border-radius:50%; background:#243047; box-shadow:12px 0 #243047; }
+    .mouth { position:absolute; left:11px; top:20px; width:9px; height:4px; border-bottom:2px solid #8b2942; border-radius:0 0 12px 12px; }
+    .child .face::after { content:""; position:absolute; top:-7px; left:-2px; width:32px; height:14px; border-radius:60% 70% 25% 30%; background:#4c2b31; z-index:-1; }
+    .body { position:absolute; bottom:0; left:6px; width:40px; height:28px; border-radius:18px 18px 5px 5px; background:#3185fc; }
+    .child { animation:giggle .78s ease-in-out infinite alternate; }
+    .child .mouth { width:11px; height:6px; top:19px; background:#8b2942; border:0; border-radius:0 0 10px 10px; animation:laugh .35s ease-in-out infinite alternate; }
+    .adult .face { background:#d89a70; }
+    .adult .face::after { content:""; position:absolute; top:-6px; left:1px; width:26px; height:12px; border-radius:80% 40% 0 0; background:#28344a; z-index:-1; }
+    .adult .body { background:#06a678; }
+    .adult .mouth { animation:talk .26s ease-in-out infinite alternate; }
+    .thumb { position:absolute; z-index:3; right:-10px; bottom:14px; font-size:29px; transform-origin:bottom left; animation:thumb-up .8s ease-in-out infinite alternate; }
+    @keyframes giggle { to { transform:rotate(5deg) translateY(-2px); } }
+    @keyframes laugh { to { transform:scaleY(1.8); } }
+    @keyframes talk { to { transform:scaleY(2.1); } }
+    @keyframes thumb-up { to { transform:rotate(-14deg) translateY(-5px); } }
+    @media (prefers-reduced-motion:reduce) { .character,.child .mouth,.adult .mouth,.thumb,.timer.urgent { animation:none; } }
+    .rule { margin:16px 0 12px; text-align:center; font-size:14px; color:#475569; }
+    .board-wrap { position:relative; width:100%; aspect-ratio:1; border-radius:50%; overflow:hidden; background:radial-gradient(circle at 42% 35%,#fff 0%,#f4ffff 53%,#d8eeee 100%); border:3px solid #274a57; box-shadow:0 12px 32px #34526a2b, inset 0 0 0 6px #fff; }
+    .board-wrap::after { content:""; position:absolute; inset:9px; border:1px solid #9fc6c8; border-radius:50%; pointer-events:none; }
+    #board { position:absolute; inset:0; width:100%; height:100%; touch-action:none; }
+    .dot { position:absolute; width:clamp(30px,9vw,43px); aspect-ratio:1; transform:translate(-50%,-50%); border:4px solid white; border-radius:50%; box-shadow:0 3px 8px #16314b45, 0 0 0 2px currentColor; pointer-events:none; }
+    .dot::after { content:""; position:absolute; inset:5px; border-radius:50%; background:currentColor; }
+    .red { color:var(--red); } .green { color:var(--green); } .blue { color:var(--blue); }
+    .controls { display:flex; justify-content:center; padding:18px 0 4px; }
+    button { appearance:none; border:0; border-radius:999px; background:#1d4ed8; color:white; padding:13px 24px; font-size:16px; font-weight:800; box-shadow:0 5px 0 #173d96; cursor:pointer; }
+    button:active { transform:translateY(3px); box-shadow:0 2px 0 #173d96; }
+    .message { min-height:24px; margin:8px 0 0; text-align:center; font-weight:800; font-size:15px; }
+    .message.fail { color:#dc2626; } .message.win { color:#047857; }
+    .legend { margin-top:auto; padding-top:10px; text-align:center; color:#64748b; font-size:12px; }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header>
+      <img class="portrait" src="https://upload.wikimedia.org/wikipedia/commons/4/49/Albert_Einstein_1921_%28re-cropped%29.jpg" alt="愛因斯坦畫像">
+      <div><h1>三色連線</h1><p class="subtitle">愛因斯坦的 30 秒腦力挑戰</p></div>
+      <div style="display:flex;align-items:center;gap:7px"><div id="timer" class="timer" aria-label="剩餘秒數">30</div><button id="soundButton" class="sound-button" type="button" aria-label="播放背景音樂">🔇</button></div>
+    </header>
+    <div class="character-show" aria-label="會說話的大人、開心的小孩與比讚手勢" role="img">
+      <div class="character child"><span class="face"><span class="mouth"></span></span><span class="body"></span></div>
+      <div class="character adult"><span class="face"><span class="mouth"></span></span><span class="body"></span><span class="thumb">👍</span></div>
+    </div>
+    <p class="rule">拖曳連接同色圓點。不同顏色的線不能相碰！</p>
+    <div class="board-wrap" id="boardWrap">
+      <canvas id="board" aria-label="三色連線遊戲區"></canvas>
+      <i class="dot red" data-color="red" style="left:16%;top:25%"></i>
+      <i class="dot red" data-color="red" style="left:83%;top:77%"></i>
+      <i class="dot green" data-color="green" style="left:84%;top:25%"></i>
+      <i class="dot green" data-color="green" style="left:17%;top:79%"></i>
+      <i class="dot blue" data-color="blue" style="left:20%;top:57%"></i>
+      <i class="dot blue" data-color="blue" style="left:79%;top:49%"></i>
+    </div>
+    <p id="message" class="message" role="status">從任一圓點開始！</p>
+    <div class="controls"><button id="restart" type="button">重新開始</button></div>
+    <p class="legend">紅・綠・藍全數連接即可過關</p>
+  </main>
+  <script>
+    (() => {
+      const canvas = document.querySelector('#board'), wrap = document.querySelector('#boardWrap');
+      const timerEl = document.querySelector('#timer'), msg = document.querySelector('#message');
+      const soundButton = document.querySelector('#soundButton');
+      const palette = { red:'#ef476f', green:'#06b487', blue:'#3185fc' };
+      const nodes = [...document.querySelectorAll('.dot')].map((el, i) => ({ el, color:el.dataset.color, i }));
+      let ctx, size, active = null, paths = {}, seconds = 30, clock, state = 'playing';
+      let audioCtx, musicTimer, musicStep = 0;
+
+      function stopMusic() { clearInterval(musicTimer); musicTimer=null; if(audioCtx){ audioCtx.close(); audioCtx=null; } soundButton.textContent='🔇'; soundButton.classList.remove('is-on'); soundButton.setAttribute('aria-label','播放背景音樂'); }
+      function startMusic() {
+        if(audioCtx) return;
+        const AC=window.AudioContext||window.webkitAudioContext; if(!AC) return;
+        audioCtx=new AC(); const notes=[523.25,659.25,783.99,659.25,587.33,698.46,880,698.46];
+        const play=()=>{ if(!audioCtx)return; const o=audioCtx.createOscillator(), g=audioCtx.createGain(); o.type='sine'; o.frequency.value=notes[musicStep++%notes.length]; g.gain.setValueAtTime(.0001,audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(.07,audioCtx.currentTime+.025); g.gain.exponentialRampToValueAtTime(.0001,audioCtx.currentTime+.28); o.connect(g).connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime+.3); };
+        play(); musicTimer=setInterval(play,340); soundButton.textContent='🔊'; soundButton.classList.add('is-on'); soundButton.setAttribute('aria-label','停止背景音樂');
+      }
+
+      function pointFor(node) { const r = wrap.getBoundingClientRect(); return { x:r.width * parseFloat(node.el.style.left) / 100, y:r.height * parseFloat(node.el.style.top) / 100 }; }
+      function setupCanvas() { const dpr = devicePixelRatio || 1; size = wrap.clientWidth; canvas.width = size*dpr; canvas.height = size*dpr; ctx = canvas.getContext('2d'); ctx.setTransform(dpr,0,0,dpr,0,0); draw(); }
+      function drawPath(points, color, ghost=false) { if (points.length < 2) return; ctx.beginPath(); ctx.moveTo(points[0].x,points[0].y); points.slice(1).forEach(p=>ctx.lineTo(p.x,p.y)); ctx.strokeStyle = palette[color]; ctx.lineWidth = ghost ? 8 : 10; ctx.lineCap='round'; ctx.lineJoin='round'; ctx.globalAlpha = ghost ? .65 : .92; ctx.stroke(); ctx.globalAlpha=1; }
+      function draw() { if (!ctx) return; ctx.clearRect(0,0,size,size); Object.entries(paths).forEach(([color, points])=>drawPath(points,color)); if(active) drawPath(active.points,active.color,true); }
+      function pFrom(e) { const r=wrap.getBoundingClientRect(); return {x:e.clientX-r.left,y:e.clientY-r.top}; }
+      const dist = (a,b) => Math.hypot(a.x-b.x,a.y-b.y);
+      function orient(a,b,c) { return (b.x-a.x)*(c.y-a.y)-(b.y-a.y)*(c.x-a.x); }
+      function onSegment(a,b,c) { return Math.min(a.x,b.x)<=c.x && c.x<=Math.max(a.x,b.x) && Math.min(a.y,b.y)<=c.y && c.y<=Math.max(a.y,b.y); }
+      function intersects(a,b,c,d) { const o1=orient(a,b,c),o2=orient(a,b,d),o3=orient(c,d,a),o4=orient(c,d,b); if ((o1>0)!=(o2>0) && (o3>0)!=(o4>0)) return true; return Math.abs(o1)<.01&&onSegment(a,b,c)||Math.abs(o2)<.01&&onSegment(a,b,d)||Math.abs(o3)<.01&&onSegment(c,d,a)||Math.abs(o4)<.01&&onSegment(c,d,b); }
+      function hitsOtherPath(a,b,color) { return Object.entries(paths).some(([other, pts]) => other!==color && pts.slice(1).some((p,i)=>intersects(a,b,pts[i],p))); }
+      function hitsOtherDot(p, color) { return nodes.some(n => n.color!==color && dist(p,pointFor(n)) < 27); }
+      function setMessage(text, kind='') { msg.textContent=text; msg.className='message '+kind; }
+      function fail(text) { state='failed'; active=null; clearInterval(clock); draw(); setMessage(text+' 按「重新開始」再試一次。','fail'); }
+      function down(e) { if(state!=='playing')return; const p=pFrom(e); const node=nodes.find(n=>!paths[n.color]&&dist(p,pointFor(n))<30); if(!node)return; active={color:node.color,start:node,points:[pointFor(node)]}; canvas.setPointerCapture(e.pointerId); }
+      function move(e) { if(!active||state!=='playing')return; const p=pFrom(e), last=active.points.at(-1); if(dist(p,last)<4)return; if(hitsOtherPath(last,p,active.color)||hitsOtherDot(p,active.color)){ fail('線碰到不同顏色！'); return; } active.points.push(p); draw(); }
+      function up(e) { if(!active||state!=='playing')return; const p=pFrom(e); const target=nodes.find(n=>n!==active.start&&n.color===active.color&&dist(p,pointFor(n))<34); if(target){ active.points.push(pointFor(target)); paths[active.color]=active.points; active=null; draw(); if(Object.keys(paths).length===3){ state='won';clearInterval(clock);setMessage('太厲害了！三色連線完成！','win'); } else setMessage('完成一組！繼續挑戰。','win'); } else { active=null; draw(); setMessage('請接到同色圓點。'); } }
+      function restart() { paths={};active=null;seconds=30;state='playing';timerEl.textContent=seconds;timerEl.classList.remove('urgent');setMessage('從任一圓點開始！');clearInterval(clock);clock=setInterval(()=>{ if(--seconds<=0){timerEl.textContent=0;fail('時間到！');return;}timerEl.textContent=seconds;if(seconds<=10)timerEl.classList.add('urgent'); },1000);draw(); }
+      canvas.addEventListener('pointerdown',down); canvas.addEventListener('pointermove',move); canvas.addEventListener('pointerup',up); canvas.addEventListener('pointercancel',up);
+      document.querySelector('#restart').addEventListener('click',restart); addEventListener('resize',setupCanvas); setupCanvas(); restart();
+      soundButton.addEventListener('click',e=>{ e.stopPropagation(); audioCtx ? stopMusic() : startMusic(); });
+      document.addEventListener('pointerdown',()=>startMusic(),{once:true});
+      addEventListener('pagehide',stopMusic); document.addEventListener('visibilitychange',()=>{ if(document.hidden) stopMusic(); });
+    })();
+  </script>
+</body>
+</html>
