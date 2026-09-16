@@ -1,0 +1,827 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>腦力遊戲綜合包</title>
+<style>
+  :root{
+    --bg: #14121f;
+    --panel: #1e1b2e;
+    --panel-2: #262238;
+    --ink: #f2eefc;
+    --ink-dim: #9d94b8;
+    --purple: #a78bfa;
+    --orange: #fb923c;
+    --teal: #2dd4bf;
+    --danger: #f87171;
+    --gold: #fbbf24;
+  }
+
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    min-height: 100%;
+    background: radial-gradient(120% 100% at 50% 0%, #241f3d 0%, var(--bg) 55%);
+    color: var(--ink);
+    font-family: "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+  }
+
+  .wrap {
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 24px 18px 60px;
+    min-height: 100vh;
+  }
+
+  /* ---------- 選單畫面 ---------- */
+
+  .home-title {
+    text-align: center;
+    font-size: 26px;
+    font-weight: 900;
+    margin: 10px 0 4px;
+  }
+
+  .home-sub {
+    text-align: center;
+    color: var(--ink-dim);
+    font-size: 13px;
+    margin-bottom: 26px;
+    letter-spacing: 1px;
+  }
+
+  .game-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: var(--panel);
+    border: 1px solid rgba(255,255,255,.06);
+    border-radius: 18px;
+    padding: 18px;
+    margin-bottom: 14px;
+    cursor: pointer;
+    transition: transform .15s, border-color .15s;
+  }
+
+  .game-card:active { transform: scale(.97); }
+
+  .game-card.c-purple { border-left: 4px solid var(--purple); }
+  .game-card.c-orange { border-left: 4px solid var(--orange); }
+  .game-card.c-teal { border-left: 4px solid var(--teal); }
+
+  .game-icon {
+    width: 54px;
+    height: 54px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+    flex-shrink: 0;
+  }
+
+  .c-purple .game-icon { background: rgba(167,139,250,.15); }
+  .c-orange .game-icon { background: rgba(251,146,60,.15); }
+  .c-teal .game-icon { background: rgba(45,212,191,.15); }
+
+  .game-info { flex: 1; }
+  .game-name { font-size: 17px; font-weight: 700; }
+  .game-desc { font-size: 12.5px; color: var(--ink-dim); margin-top: 3px; }
+
+  .best-badge {
+    font-size: 11px;
+    color: var(--gold);
+    margin-top: 6px;
+    font-weight: 700;
+  }
+
+  /* ---------- 共用遊戲畫面元件 ---------- */
+
+  .game-screen { display: none; }
+  .game-screen.active { display: block; }
+
+  .topbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+
+  .back-btn {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: var(--panel-2);
+    border: none;
+    color: var(--ink);
+    font-size: 18px;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  .topbar h2 { margin: 0; font-size: 18px; font-weight: 800; flex: 1; }
+
+  .stat-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+
+  .stat-box {
+    flex: 1;
+    background: var(--panel);
+    border-radius: 14px;
+    padding: 12px;
+    text-align: center;
+  }
+
+  .stat-label { font-size: 11px; color: var(--ink-dim); }
+  .stat-value { font-size: 22px; font-weight: 900; margin-top: 2px; font-variant-numeric: tabular-nums; }
+
+  .btn {
+    border: none;
+    border-radius: 14px;
+    padding: 14px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    width: 100%;
+  }
+
+  .btn-purple { background: var(--purple); color: #1a1030; }
+  .btn-orange { background: var(--orange); color: #2a1400; }
+  .btn-teal { background: var(--teal); color: #002a24; }
+  .btn-ghost { background: var(--panel-2); color: var(--ink); margin-top: 10px; }
+
+  .center-msg {
+    text-align: center;
+    padding: 40px 10px;
+  }
+
+  .center-msg .big { font-size: 22px; font-weight: 900; margin-bottom: 8px; }
+  .center-msg .small { color: var(--ink-dim); font-size: 13px; }
+
+  /* ---------- 記憶翻牌 ---------- */
+
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-top: 6px;
+  }
+
+  .memo-card {
+    aspect-ratio: 1;
+    border-radius: 12px;
+    background: var(--panel);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+    cursor: pointer;
+    border: 2px solid rgba(255,255,255,.05);
+    transition: transform .25s, background .2s;
+    user-select: none;
+  }
+
+  .memo-card.flipped { background: var(--panel-2); border-color: var(--purple); }
+  .memo-card.matched { background: rgba(45,212,191,.15); border-color: var(--teal); opacity: .55; }
+  .memo-card.hidden-face { font-size: 0; }
+
+  /* ---------- 數學速算 ---------- */
+
+  .math-question {
+    text-align: center;
+    font-size: 40px;
+    font-weight: 900;
+    margin: 20px 0 22px;
+    letter-spacing: 2px;
+  }
+
+  .math-options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .math-opt {
+    background: var(--panel);
+    border: 2px solid rgba(255,255,255,.06);
+    border-radius: 14px;
+    padding: 18px;
+    font-size: 22px;
+    font-weight: 800;
+    cursor: pointer;
+    color: var(--ink);
+  }
+
+  .math-opt.correct { background: rgba(45,212,191,.2); border-color: var(--teal); }
+  .math-opt.wrong { background: rgba(248,113,113,.2); border-color: var(--danger); }
+
+  .timer-bar-track {
+    height: 8px;
+    border-radius: 4px;
+    background: var(--panel-2);
+    overflow: hidden;
+    margin-bottom: 20px;
+  }
+
+  .timer-bar-fill {
+    height: 100%;
+    background: var(--orange);
+    width: 100%;
+    transition: width .1s linear;
+  }
+
+  /* ---------- 數字記憶 ---------- */
+
+  .digit-display {
+    text-align: center;
+    font-size: 48px;
+    font-weight: 900;
+    letter-spacing: 10px;
+    margin: 30px 0;
+    min-height: 60px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .digit-input {
+    width: 100%;
+    padding: 16px;
+    font-size: 24px;
+    text-align: center;
+    letter-spacing: 6px;
+    border-radius: 14px;
+    border: 2px solid var(--panel-2);
+    background: var(--panel);
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .digit-input:focus { outline: none; border-color: var(--teal); }
+
+  .keypad {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-top: 16px;
+  }
+
+  .key-btn {
+    padding: 16px;
+    font-size: 20px;
+    font-weight: 700;
+    border-radius: 12px;
+    border: none;
+    background: var(--panel);
+    color: var(--ink);
+  }
+
+  .key-btn:active { background: var(--panel-2); }
+
+  .footer-note {
+    text-align: center;
+    color: var(--ink-dim);
+    font-size: 10.5px;
+    margin-top: 30px;
+    letter-spacing: 1px;
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <!-- ============ 主選單 ============ -->
+  <div class="game-screen active" id="screen-home">
+
+    <div class="home-title">🧠 腦力遊戲綜合包</div>
+    <div class="home-sub">挑一個開始訓練吧</div>
+
+    <div class="game-card c-purple" onclick="startMemory()">
+      <div class="game-icon">🎴</div>
+      <div class="game-info">
+        <div class="game-name">記憶力翻牌</div>
+        <div class="game-desc">翻開配對相同的圖案，步數越少越厲害</div>
+        <div class="best-badge" id="memoryBest"></div>
+      </div>
+    </div>
+
+    <div class="game-card c-orange" onclick="startMath()">
+      <div class="game-icon">➗</div>
+      <div class="game-info">
+        <div class="game-name">數學速算</div>
+        <div class="game-desc">60 秒內盡量答對越多題越好</div>
+        <div class="best-badge" id="mathBest"></div>
+      </div>
+    </div>
+
+    <div class="game-card c-teal" onclick="startDigit()">
+      <div class="game-icon">🔢</div>
+      <div class="game-info">
+        <div class="game-name">數字記憶</div>
+        <div class="game-desc">記住越來越長的數字串，看你能撐到第幾關</div>
+        <div class="best-badge" id="digitBest"></div>
+      </div>
+    </div>
+
+    <div class="footer-note">分數會存在這台手機／瀏覽器裡，換裝置不會同步</div>
+
+  </div>
+
+  <!-- ============ 記憶翻牌 ============ -->
+  <div class="game-screen" id="screen-memory">
+
+    <div class="topbar">
+      <button class="back-btn" onclick="goHome()">←</button>
+      <h2>記憶力翻牌</h2>
+    </div>
+
+    <div class="stat-row">
+      <div class="stat-box">
+        <div class="stat-label">步數</div>
+        <div class="stat-value" id="memoryMoves">0</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">時間</div>
+        <div class="stat-value" id="memoryTime">0.0</div>
+      </div>
+    </div>
+
+    <div class="card-grid" id="memoryGrid"></div>
+
+    <div class="center-msg" id="memoryResult" style="display:none;">
+      <div class="big" id="memoryResultText"></div>
+      <button class="btn btn-purple" onclick="startMemory()">再玩一次</button>
+      <button class="btn btn-ghost" onclick="goHome()">回選單</button>
+    </div>
+
+  </div>
+
+  <!-- ============ 數學速算 ============ -->
+  <div class="game-screen" id="screen-math">
+
+    <div class="topbar">
+      <button class="back-btn" onclick="goHome()">←</button>
+      <h2>數學速算</h2>
+    </div>
+
+    <div class="stat-row">
+      <div class="stat-box">
+        <div class="stat-label">分數</div>
+        <div class="stat-value" id="mathScore">0</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">剩餘秒數</div>
+        <div class="stat-value" id="mathTimeLeft">60</div>
+      </div>
+    </div>
+
+    <div class="timer-bar-track"><div class="timer-bar-fill" id="mathTimerBar"></div></div>
+
+    <div id="mathPlayArea">
+      <div class="math-question" id="mathQuestion">?</div>
+      <div class="math-options" id="mathOptions"></div>
+    </div>
+
+    <div class="center-msg" id="mathResult" style="display:none;">
+      <div class="big" id="mathResultText"></div>
+      <button class="btn btn-orange" onclick="startMath()">再玩一次</button>
+      <button class="btn btn-ghost" onclick="goHome()">回選單</button>
+    </div>
+
+  </div>
+
+  <!-- ============ 數字記憶 ============ -->
+  <div class="game-screen" id="screen-digit">
+
+    <div class="topbar">
+      <button class="back-btn" onclick="goHome()">←</button>
+      <h2>數字記憶</h2>
+    </div>
+
+    <div class="stat-row">
+      <div class="stat-box">
+        <div class="stat-label">第幾關</div>
+        <div class="stat-value" id="digitLevel">1</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-label">位數</div>
+        <div class="stat-value" id="digitLength">3</div>
+      </div>
+    </div>
+
+    <div id="digitShowArea">
+      <div class="digit-display" id="digitDisplay">看好囉</div>
+    </div>
+
+    <div id="digitInputArea" style="display:none;">
+      <div class="digit-display" style="font-size:22px;color:var(--ink-dim);">請輸入剛剛的數字</div>
+      <input class="digit-input" id="digitInput" inputmode="numeric" pattern="[0-9]*" readonly>
+      <div class="keypad" id="digitKeypad"></div>
+    </div>
+
+    <div class="center-msg" id="digitResult" style="display:none;">
+      <div class="big" id="digitResultText"></div>
+      <button class="btn btn-teal" onclick="startDigit()">再玩一次</button>
+      <button class="btn btn-ghost" onclick="goHome()">回選單</button>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+// ============================================================
+// 共用：畫面切換 + 分數儲存
+// ============================================================
+
+function showScreen(id) {
+    document.querySelectorAll('.game-screen').forEach(el => el.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+}
+
+function goHome() {
+    clearMathTimer();
+    clearDigitTimer();
+    showScreen('screen-home');
+    renderBestScores();
+}
+
+function getBest(key) {
+    const v = localStorage.getItem('brain_' + key);
+    return v ? JSON.parse(v) : null;
+}
+
+function setBestIfBetter(key, value, higherIsBetter) {
+    const current = getBest(key);
+    if (current === null || (higherIsBetter ? value > current : value < current)) {
+        localStorage.setItem('brain_' + key, JSON.stringify(value));
+        return true;
+    }
+    return false;
+}
+
+function renderBestScores() {
+    const memoryBest = getBest('memory_moves');
+    document.getElementById('memoryBest').textContent =
+        memoryBest !== null ? `🏆 最佳紀錄：${memoryBest} 步` : '';
+
+    const mathBest = getBest('math_score');
+    document.getElementById('mathBest').textContent =
+        mathBest !== null ? `🏆 最佳紀錄：${mathBest} 分` : '';
+
+    const digitBest = getBest('digit_level');
+    document.getElementById('digitBest').textContent =
+        digitBest !== null ? `🏆 最佳紀錄：第 ${digitBest} 關` : '';
+}
+
+
+// ============================================================
+// 遊戲一：記憶力翻牌
+// ============================================================
+
+const MEMORY_SYMBOLS = ['🍎','🍌','🍇','🍉','🍒','🍋','🍓','🥝'];
+
+let memoryState = {
+    cards: [],
+    flipped: [],
+    matchedCount: 0,
+    moves: 0,
+    startTime: 0,
+    timerId: null,
+    locked: false,
+};
+
+function startMemory() {
+    showScreen('screen-memory');
+    document.getElementById('memoryResult').style.display = 'none';
+    document.getElementById('memoryGrid').style.display = 'grid';
+
+    const symbols = [...MEMORY_SYMBOLS, ...MEMORY_SYMBOLS];
+    for (let i = symbols.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [symbols[i], symbols[j]] = [symbols[j], symbols[i]];
+    }
+
+    memoryState = {
+        cards: symbols,
+        flipped: [],
+        matchedCount: 0,
+        moves: 0,
+        startTime: Date.now(),
+        locked: false,
+    };
+
+    document.getElementById('memoryMoves').textContent = '0';
+    document.getElementById('memoryTime').textContent = '0.0';
+
+    if (memoryState.timerId) clearInterval(memoryState.timerId);
+    memoryState.timerId = setInterval(() => {
+        const sec = (Date.now() - memoryState.startTime) / 1000;
+        document.getElementById('memoryTime').textContent = sec.toFixed(1);
+    }, 100);
+
+    renderMemoryGrid();
+}
+
+function renderMemoryGrid() {
+    const grid = document.getElementById('memoryGrid');
+    grid.innerHTML = '';
+
+    memoryState.cards.forEach((symbol, idx) => {
+        const el = document.createElement('div');
+        el.className = 'memo-card hidden-face';
+        el.textContent = symbol;
+        el.dataset.idx = idx;
+        el.addEventListener('click', () => flipMemoryCard(idx));
+        grid.appendChild(el);
+    });
+}
+
+function flipMemoryCard(idx) {
+    if (memoryState.locked) return;
+    if (memoryState.flipped.includes(idx)) return;
+
+    const el = document.querySelector(`#memoryGrid [data-idx="${idx}"]`);
+    if (el.classList.contains('matched')) return;
+
+    el.classList.add('flipped');
+    el.classList.remove('hidden-face');
+    memoryState.flipped.push(idx);
+
+    if (memoryState.flipped.length === 2) {
+        memoryState.moves++;
+        document.getElementById('memoryMoves').textContent = memoryState.moves;
+
+        const [a, b] = memoryState.flipped;
+        if (memoryState.cards[a] === memoryState.cards[b]) {
+            document.querySelector(`#memoryGrid [data-idx="${a}"]`).classList.add('matched');
+            document.querySelector(`#memoryGrid [data-idx="${b}"]`).classList.add('matched');
+            memoryState.flipped = [];
+            memoryState.matchedCount += 1;
+
+            if (memoryState.matchedCount === MEMORY_SYMBOLS.length) {
+                finishMemory();
+            }
+        } else {
+            memoryState.locked = true;
+            setTimeout(() => {
+                document.querySelector(`#memoryGrid [data-idx="${a}"]`).classList.remove('flipped');
+                document.querySelector(`#memoryGrid [data-idx="${a}"]`).classList.add('hidden-face');
+                document.querySelector(`#memoryGrid [data-idx="${b}"]`).classList.remove('flipped');
+                document.querySelector(`#memoryGrid [data-idx="${b}"]`).classList.add('hidden-face');
+                memoryState.flipped = [];
+                memoryState.locked = false;
+            }, 700);
+        }
+    }
+}
+
+function finishMemory() {
+    clearInterval(memoryState.timerId);
+    const seconds = ((Date.now() - memoryState.startTime) / 1000).toFixed(1);
+    const isBest = setBestIfBetter('memory_moves', memoryState.moves, false);
+
+    document.getElementById('memoryGrid').style.display = 'none';
+    document.getElementById('memoryResult').style.display = 'block';
+    document.getElementById('memoryResultText').textContent =
+        `🎉 完成！用了 ${memoryState.moves} 步、${seconds} 秒` + (isBest ? '\n✨ 新紀錄！' : '');
+}
+
+
+// ============================================================
+// 遊戲二：數學速算
+// ============================================================
+
+let mathState = {
+    score: 0,
+    timeLeft: 60,
+    timerId: null,
+    answer: null,
+};
+
+function startMath() {
+    showScreen('screen-math');
+    document.getElementById('mathResult').style.display = 'none';
+    document.getElementById('mathPlayArea').style.display = 'block';
+
+    mathState = { score: 0, timeLeft: 60, answer: null };
+    document.getElementById('mathScore').textContent = '0';
+    document.getElementById('mathTimeLeft').textContent = '60';
+    document.getElementById('mathTimerBar').style.width = '100%';
+
+    clearMathTimer();
+    mathState.timerId = setInterval(() => {
+        mathState.timeLeft -= 0.1;
+        if (mathState.timeLeft <= 0) {
+            mathState.timeLeft = 0;
+            finishMath();
+            return;
+        }
+        document.getElementById('mathTimeLeft').textContent = Math.ceil(mathState.timeLeft);
+        document.getElementById('mathTimerBar').style.width = (mathState.timeLeft / 60 * 100) + '%';
+    }, 100);
+
+    nextMathQuestion();
+}
+
+function clearMathTimer() {
+    if (mathState.timerId) {
+        clearInterval(mathState.timerId);
+        mathState.timerId = null;
+    }
+}
+
+function nextMathQuestion() {
+    const ops = ['+', '-', '×'];
+    const op = ops[Math.floor(Math.random() * ops.length)];
+
+    let a, b, answer;
+
+    if (op === '+') {
+        a = Math.floor(Math.random() * 50) + 1;
+        b = Math.floor(Math.random() * 50) + 1;
+        answer = a + b;
+    } else if (op === '-') {
+        a = Math.floor(Math.random() * 50) + 10;
+        b = Math.floor(Math.random() * a);
+        answer = a - b;
+    } else {
+        a = Math.floor(Math.random() * 12) + 1;
+        b = Math.floor(Math.random() * 12) + 1;
+        answer = a * b;
+    }
+
+    mathState.answer = answer;
+    document.getElementById('mathQuestion').textContent = `${a} ${op} ${b} = ?`;
+
+    const options = new Set([answer]);
+    while (options.size < 4) {
+        const delta = Math.floor(Math.random() * 10) - 5;
+        const fake = answer + delta;
+        if (fake !== answer && fake >= 0) options.add(fake);
+    }
+
+    const optArr = Array.from(options);
+    for (let i = optArr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [optArr[i], optArr[j]] = [optArr[j], optArr[i]];
+    }
+
+    const optionsEl = document.getElementById('mathOptions');
+    optionsEl.innerHTML = '';
+    optArr.forEach(val => {
+        const btn = document.createElement('button');
+        btn.className = 'math-opt';
+        btn.textContent = val;
+        btn.addEventListener('click', () => answerMath(val, btn));
+        optionsEl.appendChild(btn);
+    });
+}
+
+function answerMath(value, btnEl) {
+    if (value === mathState.answer) {
+        mathState.score += 1;
+        document.getElementById('mathScore').textContent = mathState.score;
+        btnEl.classList.add('correct');
+    } else {
+        btnEl.classList.add('wrong');
+    }
+
+    setTimeout(() => {
+        if (mathState.timeLeft > 0) nextMathQuestion();
+    }, 200);
+}
+
+function finishMath() {
+    clearMathTimer();
+    const isBest = setBestIfBetter('math_score', mathState.score, true);
+
+    document.getElementById('mathPlayArea').style.display = 'none';
+    document.getElementById('mathResult').style.display = 'block';
+    document.getElementById('mathResultText').textContent =
+        `⏰ 時間到！答對 ${mathState.score} 題` + (isBest ? '\n✨ 新紀錄！' : '');
+}
+
+
+// ============================================================
+// 遊戲三：數字記憶
+// ============================================================
+
+let digitState = {
+    level: 1,
+    sequence: '',
+    input: '',
+    showTimerId: null,
+};
+
+function startDigit() {
+    showScreen('screen-digit');
+    document.getElementById('digitResult').style.display = 'none';
+
+    digitState = { level: 1, sequence: '', input: '' };
+    document.getElementById('digitLevel').textContent = '1';
+    document.getElementById('digitLength').textContent = '3';
+
+    buildDigitKeypad();
+    nextDigitRound();
+}
+
+function clearDigitTimer() {
+    if (digitState.showTimerId) {
+        clearTimeout(digitState.showTimerId);
+        digitState.showTimerId = null;
+    }
+}
+
+function nextDigitRound() {
+    clearDigitTimer();
+
+    const length = digitState.level + 2;
+    document.getElementById('digitLength').textContent = length;
+    document.getElementById('digitLevel').textContent = digitState.level;
+
+    let seq = '';
+    for (let i = 0; i < length; i++) {
+        seq += Math.floor(Math.random() * 10);
+    }
+    digitState.sequence = seq;
+    digitState.input = '';
+
+    document.getElementById('digitShowArea').style.display = 'block';
+    document.getElementById('digitInputArea').style.display = 'none';
+
+    const display = document.getElementById('digitDisplay');
+    display.textContent = seq;
+
+    const showMs = 1000 + length * 500;
+
+    digitState.showTimerId = setTimeout(() => {
+        document.getElementById('digitShowArea').style.display = 'none';
+        document.getElementById('digitInputArea').style.display = 'block';
+        document.getElementById('digitInput').value = '';
+    }, showMs);
+}
+
+function buildDigitKeypad() {
+    const keys = ['1','2','3','4','5','6','7','8','9','清除','0','送出'];
+    const keypad = document.getElementById('digitKeypad');
+    keypad.innerHTML = '';
+
+    keys.forEach(key => {
+        const btn = document.createElement('button');
+        btn.className = 'key-btn';
+        btn.textContent = key;
+        btn.addEventListener('click', () => handleDigitKey(key));
+        keypad.appendChild(btn);
+    });
+}
+
+function handleDigitKey(key) {
+    if (key === '清除') {
+        digitState.input = '';
+    } else if (key === '送出') {
+        checkDigitAnswer();
+        return;
+    } else {
+        if (digitState.input.length < digitState.sequence.length) {
+            digitState.input += key;
+        }
+    }
+    document.getElementById('digitInput').value = digitState.input;
+}
+
+function checkDigitAnswer() {
+    if (digitState.input === digitState.sequence) {
+        digitState.level += 1;
+        nextDigitRound();
+    } else {
+        finishDigit();
+    }
+}
+
+function finishDigit() {
+    const reachedLevel = digitState.level;
+    const isBest = setBestIfBetter('digit_level', reachedLevel, true);
+
+    document.getElementById('digitShowArea').style.display = 'none';
+    document.getElementById('digitInputArea').style.display = 'none';
+    document.getElementById('digitResult').style.display = 'block';
+    document.getElementById('digitResultText').textContent =
+        `💥 答錯了！撐到第 ${reachedLevel} 關` + (isBest ? '\n✨ 新紀錄！' : '');
+}
+
+
+// ============================================================
+// 初始化
+// ============================================================
+
+renderBestScores();
+</script>
+
+</body>
+</html>
