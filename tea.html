@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>綠茶沖泡與健康指南</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #f4f8f5;
+        }
+        .tab-btn.active {
+            background-color: #15803d;
+            color: white;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body class="text-gray-800 min-h-screen pb-12">
+
+    <!-- Header / Banner -->
+    <header class="bg-emerald-800 text-white py-8 px-4 shadow-lg relative overflow-hidden">
+        <div class="max-w-4xl mx-auto text-center relative z-10">
+            <h1 class="text-3xl sm:text-4xl font-bold mb-2 tracking-wide"><i class="fa-solid fa-leaf mr-2"></i>鮮綠茶沖泡與健康互動指南</h1>
+            <p class="text-emerald-100 text-sm sm:text-base">保留最多天然營養 ‧ 專家親傳熱泡與冷泡黃金黃金守則</p>
+        </div>
+        <div class="absolute -right-10 -bottom-10 opacity-10 text-9xl">
+            <i class="fa-solid fa-leaf"></i>
+        </div>
+    </header>
+
+    <!-- Navigation Tabs -->
+    <div class="max-w-4xl mx-auto mt-6 px-4">
+        <div class="bg-white p-1.5 rounded-2xl shadow-sm flex flex-wrap gap-2 text-sm font-medium border border-emerald-100">
+            <button onclick="switchTab('calculator')" id="tab-calculator" class="tab-btn active flex-1 py-2.5 px-4 rounded-xl transition duration-200 flex items-center justify-center gap-2">
+                <i class="fa-solid fa-calculator"></i> 沖泡計算器 & 計時器
+            </button>
+            <button onclick="switchTab('knowledge')" id="tab-knowledge" class="tab-btn flex-1 py-2.5 px-4 rounded-xl text-gray-600 hover:text-emerald-800 transition duration-200 flex items-center justify-center gap-2">
+                <i class="fa-solid fa-book-open"></i> 知識與沖泡步驟
+            </button>
+            <button onclick="switchTab('quiz')" id="tab-quiz" class="tab-btn flex-1 py-2.5 px-4 rounded-xl text-gray-600 hover:text-emerald-800 transition duration-200 flex items-center justify-center gap-2">
+                <i class="fa-solid fa-circle-question"></i> 互動隨堂小測驗
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Content Container -->
+    <main class="max-w-4xl mx-auto mt-6 px-4">
+
+        <!-- TAB 1: CALCULATOR & TIMER -->
+        <section id="sec-calculator" class="space-y-6">
+            <!-- Calculator Card -->
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-emerald-100">
+                <h2 class="text-xl font-bold text-emerald-900 mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-scale-balanced text-emerald-600"></i> 茶水比例快速計算器
+                </h2>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">1. 選擇沖泡方式</label>
+                        <div class="grid grid-cols-2 gap-3 mb-4">
+                            <button id="mode-hot" onclick="setMode('hot')" class="py-3 rounded-xl border-2 border-emerald-600 bg-emerald-50 text-emerald-800 font-bold flex flex-col items-center gap-1 transition">
+                                <i class="fa-solid fa-mug-hot text-xl"></i> 熱泡法 (80℃)
+                            </button>
+                            <button id="mode-cold" onclick="setMode('cold')" class="py-3 rounded-xl border-2 border-gray-200 text-gray-600 font-medium flex flex-col items-center gap-1 transition hover:border-emerald-300">
+                                <i class="fa-solid fa-snowflake text-xl"></i> 冷泡法 (常溫/冷水)
+                            </button>
+                        </div>
+
+                        <label class="block text-sm font-medium text-gray-700 mb-2">2. 飲用人數 (人)</label>
+                        <div class="flex items-center border border-gray-300 rounded-xl overflow-hidden mb-4">
+                            <button onclick="changePeople(-1)" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 font-bold">-</button>
+                            <input type="number" id="people-count" value="2" min="1" max="10" readonly class="w-full text-center font-bold text-lg focus:outline-none">
+                            <button onclick="changePeople(1)" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 font-bold">+</button>
+                        </div>
+                    </div>
+
+                    <!-- Result Panel -->
+                    <div class="bg-emerald-50 rounded-xl p-5 border border-emerald-200 flex flex-col justify-between">
+                        <div>
+                            <h3 class="text-xs font-bold text-emerald-700 uppercase tracking-wider mb-3">建議黃金配比建議</h3>
+                            <div class="space-y-3">
+                                <div class="flex justify-between items-center border-b border-emerald-200 pb-2">
+                                    <span class="text-gray-600 text-sm"><i class="fa-solid fa-leaf text-emerald-600 mr-2"></i>鮮綠茶葉量</span>
+                                    <span class="text-xl font-bold text-emerald-900" id="res-tea">10 克 <span class="text-xs text-gray-500 font-normal">(約 2 湯匙)</span></span>
+                                </div>
+                                <div class="flex justify-between items-center border-b border-emerald-200 pb-2">
+                                    <span class="text-gray-600 text-sm"><i class="fa-solid fa-droplet text-blue-500 mr-2"></i>建議水量</span>
+                                    <span class="text-xl font-bold text-emerald-900" id="res-water">200 ml</span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-gray-600 text-sm"><i class="fa-solid fa-temperature-half text-amber-500 mr-2"></i>建議水溫 / 時間</span>
+                                    <span class="text-sm font-bold text-emerald-900" id="res-temp-time">80℃ / 45~50 秒</span>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="text-xs text-emerald-700 mt-4 bg-emerald-100/50 p-2.5 rounded-lg border border-emerald-200/50" id="res-note">
+                            💡 提示：熱水沸騰後可先倒進茶杯溫杯約 1 分鐘，降溫至約 80℃ 再倒進茶壺。
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Timer Card -->
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-emerald-100 text-center">
+                <h2 class="text-xl font-bold text-emerald-900 mb-2 flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-stopwatch text-emerald-600"></i> 專屬沖泡倒數計時器
+                </h2>
+                <p class="text-sm text-gray-500 mb-4">掌握浸泡黃金秒數，避免茶葉開散釋放過多苦澀</p>
+
+                <div class="text-5xl font-mono font-bold text-emerald-800 my-4" id="timer-display">00:45</div>
+
+                <div class="flex justify-center gap-3">
+                    <button id="btn-start" onclick="toggleTimer()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2.5 rounded-xl font-bold shadow-md transition flex items-center gap-2">
+                        <i class="fa-solid fa-play"></i> 開始計時
+                    </button>
+                    <button onclick="resetTimer()" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-5 py-2.5 rounded-xl font-medium transition flex items-center gap-2">
+                        <i class="fa-solid fa-rotate-left"></i> 重設
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 2: KNOWLEDGE & STEPS -->
+        <section id="sec-knowledge" class="hidden space-y-6">
+            <!-- Preservation Card -->
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-emerald-100">
+                <h3 class="text-lg font-bold text-emerald-900 mb-3 flex items-center gap-2 border-b border-gray-100 pb-2">
+                    <i class="fa-solid fa-box-archive text-amber-500"></i> 茶葉保存秘訣
+                </h3>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
+                    <div class="bg-amber-50 p-4 rounded-xl border border-amber-100">
+                        <div class="font-bold text-amber-900 mb-1">⏳ 最佳賞味期</div>
+                        <p class="text-amber-800 text-xs">開封後建議在 <span class="font-bold underline">2 至 3 星期內</span> 喝完，避免香氣揮發。</p>
+                    </div>
+                    <div class="bg-amber-50 p-4 rounded-xl border border-amber-100">
+                        <div class="font-bold text-amber-900 mb-1">🚫 避開高溫與潮濕</div>
+                        <p class="text-amber-800 text-xs">若無茶葉罐，請按照原包裝袋緊密密封，徹底阻隔空氣。</p>
+                    </div>
+                    <div class="bg-amber-50 p-4 rounded-xl border border-amber-100">
+                        <div class="font-bold text-amber-900 mb-1">❄️ 冷凍無助留香</div>
+                        <p class="text-amber-800 text-xs">茶葉香氣即使放入冰箱冷凍/冷藏也會逐漸消散，宜儘快享用。</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Steps Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Hot Brew Steps -->
+                <div class="bg-white rounded-2xl p-6 shadow-sm border border-emerald-100">
+                    <h3 class="text-lg font-bold text-emerald-900 mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-fire text-red-500"></i> 熱泡法步驟 (京都加藤專家)
+                    </h3>
+                    <ol class="space-y-3 text-sm text-gray-700">
+                        <li class="flex gap-3">
+                            <span class="w-6 h-6 bg-emerald-100 text-emerald-800 rounded-full font-bold flex items-center justify-center shrink-0">1</span>
+                            <span>茶葉放入茶壺，將滾水倒入杯中溫杯約 1 分鐘備用。</span>
+                        </li>
+                        <li class="flex gap-3">
+                            <span class="w-6 h-6 bg-emerald-100 text-emerald-800 rounded-full font-bold flex items-center justify-center shrink-0">2</span>
+                            <span>待杯中滾水冷卻至 <strong>80℃</strong> 左右。</span>
+                        </li>
+                        <li class="flex gap-3">
+                            <span class="w-6 h-6 bg-emerald-100 text-emerald-800 rounded-full font-bold flex items-center justify-center shrink-0">3</span>
+                            <span>將水倒入茶壺，蓋上蓋子浸泡 <strong>45 秒～50 秒</strong>。</span>
+                        </li>
+                        <li class="flex gap-3">
+                            <span class="w-6 h-6 bg-emerald-100 text-emerald-800 rounded-full font-bold flex items-center justify-center shrink-0">4</span>
+                            <span>依序平均倒入各人茶杯約 1/3 高度（一壺可回沖 2~3 次）。</span>
+                        </li>
+                    </ol>
+                </div>
+
+                <!-- Cold Brew Steps -->
+                <div class="bg-white rounded-2xl p-6 shadow-sm border border-emerald-100">
+                    <h3 class="text-lg font-bold text-emerald-900 mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-snowflake text-blue-500"></i> 冷泡法步驟 (甘甜清爽)
+                    </h3>
+                    <ol class="space-y-3 text-sm text-gray-700">
+                        <li class="flex gap-3">
+                            <span class="w-6 h-6 bg-blue-100 text-blue-800 rounded-full font-bold flex items-center justify-center shrink-0">1</span>
+                            <span>茶葉放入玻璃壺，倒入清水或常溫水。</span>
+                        </li>
+                        <li class="flex gap-3">
+                            <span class="w-6 h-6 bg-blue-100 text-blue-800 rounded-full font-bold flex items-center justify-center shrink-0">2</span>
+                            <span>蓋上蓋子，在室溫下靜置浸泡 <strong>10 分鐘～15 分鐘</strong>。</span>
+                        </li>
+                        <li class="flex gap-3">
+                            <span class="w-6 h-6 bg-blue-100 text-blue-800 rounded-full font-bold flex items-center justify-center shrink-0">3</span>
+                            <span>分次平均倒出 1/3 的量至個人茶杯中享用。</span>
+                        </li>
+                        <li class="flex gap-3">
+                            <span class="w-6 h-6 bg-blue-100 text-blue-800 rounded-full font-bold flex items-center justify-center shrink-0">4</span>
+                            <span>二沖時再加入冷水，靜置 <strong>5～10 分鐘</strong> 即可飲用。</span>
+                        </li>
+                    </ol>
+                </div>
+            </div>
+
+            <!-- Health Benefits & Precautions -->
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-emerald-100">
+                <h3 class="text-lg font-bold text-emerald-900 mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-heart-pulse text-rose-500"></i> 健康益處與飲用禁忌
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+                    <div class="bg-emerald-50/70 p-4 rounded-xl border border-emerald-200">
+                        <h4 class="font-bold text-emerald-900 mb-2 flex items-center gap-1.5">
+                            <i class="fa-solid fa-circle-check text-emerald-600"></i> 綠茶健康好處
+                        </h4>
+                        <ul class="list-disc list-inside text-gray-700 space-y-1">
+                            <li>未經發酵，保留茶多酚、兒茶素、葉綠素與維他命。</li>
+                            <li>富含<strong>兒茶素</strong>，有助預防脂肪肝與輔助減重。</li>
+                            <li>中醫師陳潮宗建議：<strong>早餐後飲用</strong>可幫助脾胃運化、提升五臟機能。</li>
+                        </ul>
+                    </div>
+
+                    <div class="bg-rose-50/70 p-4 rounded-xl border border-rose-200">
+                        <h4 class="font-bold text-rose-900 mb-2 flex items-center gap-1.5">
+                            <i class="fa-solid fa-triangle-exclamation text-rose-600"></i> 飲用禁忌與注意事項
+                        </h4>
+                        <ul class="list-disc list-inside text-gray-700 space-y-1">
+                            <li><strong>飯後 1 小時內勿喝</strong>：單寧酸會阻礙身體吸收鐵質。</li>
+                            <li><strong>腸胃佳者適量</strong>：單寧酸易在胃內與蛋白質結合造成不適。</li>
+                            <li><strong>不宜飲用族群</strong>：胃炎/腸胃疾病患者、胃寒、吃生冷食物易腹瀉者。</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 3: QUIZ -->
+        <section id="sec-quiz" class="hidden">
+            <div class="bg-white rounded-2xl p-6 shadow-sm border border-emerald-100">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-bold text-emerald-900 flex items-center gap-2">
+                        <i class="fa-solid fa-graduation-cap text-emerald-600"></i> 綠茶知識挑戰賽
+                    </h2>
+                    <span class="text-xs bg-emerald-100 text-emerald-800 font-bold px-3 py-1 rounded-full" id="quiz-progress">共 5 題</span>
+                </div>
+
+                <div id="quiz-container" class="space-y-6">
+                    <!-- Dynamic Quiz Inserted via JS -->
+                </div>
+
+                <div id="quiz-result" class="hidden text-center py-8">
+                    <div class="text-5xl mb-3" id="result-emoji">🎉</div>
+                    <h3 class="text-2xl font-bold text-gray-800 mb-2" id="result-score">您的得分：5 / 5</h3>
+                    <p class="text-gray-600 text-sm mb-6" id="result-msg">太厲害了！您已經完整掌握綠茶沖泡與健康知識！</p>
+                    <button onclick="restartQuiz()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-6 py-2.5 rounded-xl shadow-md transition">
+                        重新挑戰
+                    </button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        // --- State Management ---
+        let currentMode = 'hot'; // 'hot' or 'cold'
+        let people = 2;
+        let timerInterval = null;
+        let timerSeconds = 45;
+        let isTimerRunning = false;
+
+        // --- Tab Switching ---
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active', 'bg-emerald-700', 'text-white');
+                btn.classList.add('text-gray-600');
+            });
+            
+            document.getElementById(`tab-${tabName}`).classList.add('active');
+            
+            document.getElementById('sec-calculator').classList.add('hidden');
+            document.getElementById('sec-knowledge').classList.add('hidden');
+            document.getElementById('sec-quiz').classList.add('hidden');
+            
+            document.getElementById(`sec-${tabName}`).classList.remove('hidden');
+        }
+
+        // --- Calculator Logic ---
+        function setMode(mode) {
+            currentMode = mode;
+            const hotBtn = document.getElementById('mode-hot');
+            const coldBtn = document.getElementById('mode-cold');
+
+            if (mode === 'hot') {
+                hotBtn.className = "py-3 rounded-xl border-2 border-emerald-600 bg-emerald-50 text-emerald-800 font-bold flex flex-col items-center gap-1 transition";
+                coldBtn.className = "py-3 rounded-xl border-2 border-gray-200 text-gray-600 font-medium flex flex-col items-center gap-1 transition hover:border-emerald-300";
+            } else {
+                coldBtn.className = "py-3 rounded-xl border-2 border-blue-600 bg-blue-50 text-blue-800 font-bold flex flex-col items-center gap-1 transition";
+                hotBtn.className = "py-3 rounded-xl border-2 border-gray-200 text-gray-600 font-medium flex flex-col items-center gap-1 transition hover:border-emerald-300";
+            }
+            calculate();
+        }
+
+        function changePeople(delta) {
+            people = Math.max(1, Math.min(10, people + delta));
+            document.getElementById('people-count').value = people;
+            calculate();
+        }
+
+        function calculate() {
+            let teaGrams = 10;
+            let waterMl = 200;
+            let tempTime = "";
+            let note = "";
+
+            if (currentMode === 'hot') {
+                // Base: 2-3 people -> 10g tea, 100~200ml water
+                waterMl = people * 100;
+                let extraWater = Math.max(0, waterMl - 200);
+                let extraTeaTeaspoons = Math.ceil(extraWater / 100);
+                teaGrams = 10 + (extraTeaTeaspoons * 3);
+                tempTime = "80℃ / 45~50 秒";
+                note = "💡 提示：熱水沸騰後倒進茶杯溫杯 1 分鐘，水溫降至約 80℃ 再倒入茶壺。浸泡 45~50 秒即可倒入茶杯。";
+                resetTimerVal(45);
+            } else {
+                // Cold Brew Base: 2-3 people -> 10g tea, 200~300ml water
+                waterMl = people * 150;
+                if (waterMl > 400) {
+                    teaGrams = 15 + Math.ceil((waterMl - 400) / 100) * 3;
+                } else {
+                    teaGrams = 10;
+                }
+                tempTime = "常溫或冷水 / 10~15 分鐘";
+                note = "💡 提示：放入冷水後在室溫下浸泡 10~15 分鐘即可飲用。二沖可再加冷水靜置 5~10 分鐘。";
+                resetTimerVal(10 * 60);
+            }
+
+            document.getElementById('res-tea').innerHTML = `${teaGrams} 克 <span class="text-xs text-gray-500 font-normal">(約 ${(teaGrams/5).toFixed(1)} 湯匙)</span>`;
+            document.getElementById('res-water').innerText = `${waterMl} ml`;
+            document.getElementById('res-temp-time').innerText = tempTime;
+            document.getElementById('res-note').innerText = note;
+        }
+
+        // --- Timer Logic ---
+        function resetTimerVal(sec) {
+            clearInterval(timerInterval);
+            isTimerRunning = false;
+            timerSeconds = sec;
+            updateTimerDisplay();
+            document.getElementById('btn-start').innerHTML = `<i class="fa-solid fa-play"></i> 開始計時`;
+        }
+
+        function updateTimerDisplay() {
+            const m = Math.floor(timerSeconds / 60).toString().padStart(2, '0');
+            const s = (timerSeconds % 60).toString().padStart(2, '0');
+            document.getElementById('timer-display').innerText = `${m}:${s}`;
+        }
+
+        function toggleTimer() {
+            if (isTimerRunning) {
+                clearInterval(timerInterval);
+                isTimerRunning = false;
+                document.getElementById('btn-start').innerHTML = `<i class="fa-solid fa-play"></i> 繼續`;
+            } else {
+                isTimerRunning = true;
+                document.getElementById('btn-start').innerHTML = `<i class="fa-solid fa-pause"></i> 暫停`;
+                timerInterval = setInterval(() => {
+                    if (timerSeconds > 0) {
+                        timerSeconds--;
+                        updateTimerDisplay();
+                    } else {
+                        clearInterval(timerInterval);
+                        isTimerRunning = false;
+                        document.getElementById('btn-start').innerHTML = `<i class="fa-solid fa-play"></i> 開始計時`;
+                        playBeep();
+                    }
+                }, 1000);
+            }
+        }
+
+        function resetTimer() {
+            resetTimerVal(currentMode === 'hot' ? 45 : 600);
+        }
+
+        function playBeep() {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
+                osc.connect(ctx.destination);
+                osc.start();
+                osc.stop(ctx.currentTime + 1);
+            } catch(e) {
+                console.log("Audio API not supported");
+            }
+        }
+
+        // --- Quiz Data & Logic ---
+        const quizData = [
+            {
+                q: "1. 鮮綠茶葉開封後，建議的最佳賞味期為多久？",
+                options: ["2 至 3 星期內", "2 至 3 個月內", "半年內", "放冰箱可放一年"],
+                ans: 0,
+                explain: "文章建議開封後最好在 2 至 3 星期內喝完，避免香氣逐漸揮發流失。"
+            },
+            {
+                q: "2. 京都茶葉專家加藤先生建議，熱泡鮮綠茶的最佳水溫與時間為何？",
+                options: ["100℃ 滾水浸泡 3 分鐘", "80℃ 熱水浸泡 45~50 秒", "60℃ 溫水浸泡 5 分鐘", "50℃ 溫水浸泡 20 秒"],
+                ans: 1,
+                explain: "柔軟的新茶葉容易散開，建議以 80℃ 熱水浸泡 45 至 50 秒最為鮮香。"
+            },
+            {
+                q: "3. 為什麼文章強烈建議「飯後 1 小時內」不宜喝綠茶？",
+                options: ["綠茶熱量太高容易發胖", "單寧酸會阻礙身體吸收鐵質", "兒茶素會分解蛋白質", "容易引發高血糖"],
+                ans: 1,
+                explain: "綠茶中的單寧酸會阻礙身體吸收鐵質，因此飯後 1 小時內不建議飲用。"
+            },
+            {
+                q: "4. 根據中醫師陳潮宗的建議，一天中什麼時段最適合喝綠茶？",
+                options: ["睡前 1 小時", "午睡剛醒時", "早餐後", "空腹剛起床時"],
+                ans: 3,
+                explain: "陳潮宗中醫師指出，早餐後喝綠茶可幫助脾胃運化，提升五臟功能表現並有利代謝。"
+            },
+            {
+                q: "5. 下列何種體質或狀況的人群「不宜」喝綠茶？",
+                options: ["想維持身材或減重者", "常吃油膩食物者", "有胃炎或吃少許生冷食物易拉肚子者", "經常早起運動者"],
+                ans: 2,
+                explain: "綠茶單寧酸含量較高，易刺激胃部，有胃炎、腸胃疾病或胃寒易腹瀉者不宜喝。"
+            }
+        ];
+
+        let userAnswers = Array(quizData.length).fill(null);
+
+        function renderQuiz() {
+            const container = document.getElementById('quiz-container');
+            container.innerHTML = quizData.map((item, qIdx) => `
+                <div class="border border-gray-100 rounded-xl p-4 bg-gray-50/50 space-y-3">
+                    <p class="font-bold text-gray-800">${item.q}</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        ${item.options.map((opt, oIdx) => `
+                            <button onclick="selectAnswer(${qIdx}, ${oIdx})" id="btn-q${qIdx}-o${oIdx}" class="quiz-opt-btn text-left p-3 rounded-lg border border-gray-200 bg-white hover:bg-emerald-50 text-sm transition">
+                                ${opt}
+                            </button>
+                        `).join('')}
+                    </div>
+                    <div id="explain-${qIdx}" class="hidden text-xs p-3 rounded-lg border"></div>
+                </div>
+            `).join('');
+        }
+
+        function selectAnswer(qIdx, oIdx) {
+            userAnswers[qIdx] = oIdx;
+            const item = quizData[qIdx];
+
+            // Highlight chosen & correct
+            item.options.forEach((_, idx) => {
+                const btn = document.getElementById(`btn-q${qIdx}-o${idx}`);
+                btn.disabled = true;
+                if (idx === item.ans) {
+                    btn.className = "quiz-opt-btn text-left p-3 rounded-lg border-2 border-emerald-500 bg-emerald-100 font-bold text-emerald-900 text-sm";
+                } else if (idx === oIdx && oIdx !== item.ans) {
+                    btn.className = "quiz-opt-btn text-left p-3 rounded-lg border-2 border-rose-400 bg-rose-50 text-rose-800 text-sm";
+                } else {
+                    btn.className = "quiz-opt-btn text-left p-3 rounded-lg border border-gray-200 bg-gray-100 text-gray-400 text-sm";
+                }
+            });
+
+            const expBox = document.getElementById(`explain-${qIdx}`);
+            expBox.classList.remove('hidden');
+            if (oIdx === item.ans) {
+                expBox.className = "text-xs p-3 rounded-lg border bg-emerald-50 border-emerald-200 text-emerald-800";
+                expBox.innerHTML = `✅ <strong>回答正確！</strong> ${item.explain}`;
+            } else {
+                expBox.className = "text-xs p-3 rounded-lg border bg-rose-50 border-rose-200 text-rose-800";
+                expBox.innerHTML = `❌ <strong>回答錯誤！</strong> ${item.explain}`;
+            }
+
+            checkQuizComplete();
+        }
+
+        function checkQuizComplete() {
+            if (userAnswers.every(ans => ans !== null)) {
+                let score = 0;
+                userAnswers.forEach((ans, idx) => {
+                    if (ans === quizData[idx].ans) score++;
+                });
+
+                document.getElementById('quiz-result').classList.remove('hidden');
+                document.getElementById('result-score').innerText = `您的得分：${score} / ${quizData.length}`;
+                
+                if (score === 5) {
+                    document.getElementById('result-emoji').innerText = "🎉";
+                    document.getElementById('result-msg').innerText = "太棒了！您已經完整掌握綠茶沖泡與健康的專業知識！";
+                } else {
+                    document.getElementById('result-emoji').innerText = "💪";
+                    document.getElementById('result-msg').innerText = "表現不錯！可以再複習一下重點筆記，邁向滿分！";
+                }
+            }
+        }
+
+        function restartQuiz() {
+            userAnswers = Array(quizData.length).fill(null);
+            document.getElementById('quiz-result').classList.add('hidden');
+            renderQuiz();
+        }
+
+        // --- Init ---
+        window.onload = function() {
+            calculate();
+            renderQuiz();
+        };
+    </script>
+</body>
+</html>
